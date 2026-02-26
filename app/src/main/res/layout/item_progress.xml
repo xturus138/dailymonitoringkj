@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="30dp"
+    android:gravity="center"
+    android:background="@color/color_secondary"
+    android:layout_marginTop="@dimen/dimen_margin_6"
+    android:orientation="horizontal">
+
+    <TextView
+        android:id="@+id/tvNamaDivisi"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Divisi"
+        style="@style/font14.bold"
+        android:textAlignment="center"
+        android:layout_weight="1"/>
+
+    <TextView
+        android:id="@+id/tvProject"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Project Progress"
+        android:textAlignment="center"
+        style="@style/font12.bold"
+        android:layout_weight="1.5"/>
+
+    <TextView
+        android:id="@+id/tvPersentase"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="0%"
+        style="@style/font14.bold"
+        android:textAlignment="center"
+        android:layout_weight="1"/>
+
+</LinearLayout>

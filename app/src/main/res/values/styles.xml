@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    // FONT 8SP
+    <style name="font8.regular" parent="Widget.MaterialComponents.TextView">
+        <item name="android:textSize">8sp</item>
+        <item name="android:textColor">@color/dark_blue</item>
+        <item name="fontFamily">@font/roboto</item>
+    </style>
+
+    <style name="font8.bold" parent="font8.regular">
+        <item name="fontFamily">@font/roboto</item>
+    </style>
+
+    // FONT 12SP
+    <style name="font12.regular" parent="Widget.MaterialComponents.TextView">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/dark_blue</item>
+        <item name="fontFamily">@font/roboto</item>
+    </style>
+
+    <style name="font12.bold" parent="font12.regular">
+        <item name="android:textStyle">bold</item>
+        <item name="fontFamily">@font/roboto</item>
+    </style>
+
+    // FONT 16SP
+    <style name="font14.regular" parent="Widget.MaterialComponents.TextView">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/dark_blue</item>
+        <item name="fontFamily">@font/roboto</item>
+    </style>
+
+    <style name="font14.bold" parent="font14.regular">
+        <item name="android:textStyle">bold</item>
+        <item name="fontFamily">@font/roboto</item>
+    </style>
+
+    // FONT 16SP
+    <style name="font16.regular" parent="Widget.MaterialComponents.TextView">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/dark_blue</item>
+        <item name="fontFamily">@font/roboto</item>
+    </style>
+
+    <style name="font16.bold" parent="font16.regular">
+        <item name="android:textStyle">bold</item>
+        <item name="fontFamily">@font/roboto</item>
+    </style>
+
+    // FONT 20SP
+    <style name="font20.regular" parent="Widget.MaterialComponents.TextView">
+        <item name="android:textSize">20sp</item>
+        <item name="android:textColor">@color/dark_blue</item>
+        <item name="fontFamily">@font/roboto</item>
+    </style>
+
+    <style name="font20.bold" parent="font20.regular">
+        <item name="android:textStyle">bold</item>
+        <item name="fontFamily">@font/roboto</item>
+    </style>
+
+    // FONT 24SP
+    <style name="font24.regular" parent="Widget.MaterialComponents.TextView">
+        <item name="android:textSize">24sp</item>
+        <item name="android:textColor">@color/dark_blue</item>
+        <item name="fontFamily">@font/roboto</item>
+    </style>
+
+    <style name="font24.bold" parent="font24.regular">
+        <item name="android:textStyle">bold</item>
+        <item name="fontFamily">@font/roboto</item>
+    </style>
+</resources>

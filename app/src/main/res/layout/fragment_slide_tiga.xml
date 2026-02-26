@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/background"
+    android:paddingStart="@dimen/dimen_padding_48"
+    android:paddingEnd="@dimen/dimen_padding_48"
+    android:paddingTop="@dimen/dimen_padding_35"
+    android:paddingBottom="@dimen/dimen_padding_35"
+    tools:context=".ui.main.slide1.SlideSatu">
+
+    <TextView
+        android:id="@+id/currentDateTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/font24.bold"
+        android:text="RABU, 25/02/2026"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+    <TextView
+        android:id="@+id/currentDayTime"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        style="@style/font16.bold"
+        android:text="10:00:01"
+        android:textAlignment="textStart"
+        app:layout_constraintStart_toStartOf="@id/currentDateTime"
+        app:layout_constraintTop_toBottomOf="@id/currentDateTime"
+        app:layout_constraintEnd_toEndOf="@id/currentDateTime"/>
+
+    <ImageView
+        android:layout_width="120dp"
+        android:layout_height="0dp"
+        android:src="@drawable/karirjepang"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/currentDateTime"
+        app:layout_constraintBottom_toBottomOf="@id/currentDayTime"/>
+
+    <TextView
+        android:id="@+id/tvTitleChart"
+        style="@style/font24.bold"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/dimen_margin_12"
+        android:text="JUMLAH KEBERANGKATAN PMI"
+        android:textAlignment="center"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/currentDayTime" />
+
+    <com.github.mikephil.charting.charts.BarChart
+        android:id="@+id/barChart"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvTitleChart" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
