@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    android:paddingStart="@dimen/dimen_padding_48"
+    android:paddingEnd="@dimen/dimen_padding_48"
+    android:paddingTop="@dimen/dimen_padding_35"
+    android:paddingBottom="@dimen/dimen_padding_35">
+
+    <TextView
+        android:id="@+id/currentDateTime"
+        style="@style/font24.bold"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="SENIN, 02 MARET 2026"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/currentDayTime"
+        style="@style/font16.bold"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="10:00:01 WIB"
+        app:layout_constraintEnd_toEndOf="@id/currentDateTime"
+        app:layout_constraintStart_toStartOf="@id/currentDateTime"
+        app:layout_constraintTop_toBottomOf="@id/currentDateTime" />
+
+    <ImageView
+        android:layout_width="120dp"
+        android:layout_height="0dp"
+        android:src="@drawable/karirjepang"
+        app:layout_constraintBottom_toBottomOf="@id/currentDayTime"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/currentDateTime" />
+
+    <TextView
+        android:id="@+id/tvTitleMitra"
+        style="@style/font24.bold"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:text="DAFTAR MITRA KARIR JEPANG"
+        android:textAlignment="center"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/currentDayTime" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvMitra"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="32dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvTitleMitra"
+        tools:listitem="@layout/item_mitra" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

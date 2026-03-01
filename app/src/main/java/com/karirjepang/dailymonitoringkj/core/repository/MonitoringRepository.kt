@@ -1,8 +1,10 @@
 package com.karirjepang.dailymonitoringkj.core.repository
 
+import com.karirjepang.dailymonitoringkj.R
 import com.karirjepang.dailymonitoringkj.core.model.KeberangkatanPMI
 import com.karirjepang.dailymonitoringkj.core.model.Kehadiran
 import com.karirjepang.dailymonitoringkj.core.model.Meeting
+import com.karirjepang.dailymonitoringkj.core.model.Mitra
 import com.karirjepang.dailymonitoringkj.core.model.ProgressDivisi
 import javax.inject.Inject
 
@@ -41,6 +43,22 @@ class MonitoringRepository @Inject constructor() {
             KeberangkatanPMI(2024f, 285f, 11f),
             KeberangkatanPMI(2025f, 415f, 8f),
             KeberangkatanPMI(2026f, 10f, 2f)
+        )
+    }
+
+    fun getDaftarMitra(): List<Mitra> {
+        return listOf(
+            Mitra("ASAHI", R.mipmap.ic_launcher),
+            Mitra("Dwi Karya Prima", R.mipmap.ic_launcher),
+            Mitra("Busan Ngawi", R.mipmap.ic_launcher),
+            Mitra("Mitra Edukasi", R.mipmap.ic_launcher),
+            Mitra("Mendunia.id", R.mipmap.ic_launcher),
+            Mitra("Ayumi Global", R.mipmap.ic_launcher),
+            Mitra("Al Amin Course", R.mipmap.ic_launcher),
+            Mitra("Kineta Jaya Abadi", R.mipmap.ic_launcher),
+            Mitra("Medumeka Go Touryumon", R.mipmap.ic_launcher),
+            Mitra("Himnaera", R.mipmap.ic_launcher),
+            Mitra("Enter Borneo", R.mipmap.ic_launcher)
         )
     }
 }
