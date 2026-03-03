@@ -10,6 +10,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.karirjepang.dailymonitoringkj.databinding.FragmentSlideSatuBinding
 import com.karirjepang.dailymonitoringkj.ui.adapter.KehadiranAdapter
 import com.karirjepang.dailymonitoringkj.ui.adapter.MeetingAdapter
+import com.karirjepang.dailymonitoringkj.ui.util.AutoScrollManager
+import com.karirjepang.dailymonitoringkj.ui.util.SynchronizedScrollListener
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -21,6 +23,9 @@ class SlideSatu : Fragment() {
 
     private var _binding: FragmentSlideSatuBinding? = null
     private val binding get() = _binding!!
+
+    private var autoScrollKehadiran: AutoScrollManager? = null
+    private var autoScrollMeeting: AutoScrollManager? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -40,16 +45,34 @@ class SlideSatu : Fragment() {
         binding.rvMeeting.layoutManager = LinearLayoutManager(requireContext())
         binding.rvMeeting.adapter = meetingAdapter
 
+        // Setup synchronized scroll between kehadiran and meeting
+        binding.rvKehadiran.addOnScrollListener(SynchronizedScrollListener(binding.rvMeeting))
+        binding.rvMeeting.addOnScrollListener(SynchronizedScrollListener(binding.rvKehadiran))
+
         observeData()
     }
 
     private fun observeData() {
         viewModel.kehadiranList.observe(viewLifecycleOwner) { data ->
             kehadiranAdapter.updateData(data)
+
+            // Setup auto-scroll for kehadiran if needed
+            autoScrollKehadiran?.stopAutoScroll()
+            if (data.size > 5) {
+                autoScrollKehadiran = AutoScrollManager(binding.rvKehadiran, delayMillis = 2000, actualDataCount = data.size)
+                autoScrollKehadiran?.startAutoScroll(intervalMillis = 3000)
+            }
         }
 
         viewModel.meetingList.observe(viewLifecycleOwner) { data ->
             meetingAdapter.updateData(data)
+
+            // Setup auto-scroll for meeting if needed
+            autoScrollMeeting?.stopAutoScroll()
+            if (data.size > 5) {
+                autoScrollMeeting = AutoScrollManager(binding.rvMeeting, delayMillis = 2000, actualDataCount = data.size)
+                autoScrollMeeting?.startAutoScroll(intervalMillis = 3000)
+            }
         }
 
         viewModel.currentDate.observe(viewLifecycleOwner) { date ->
@@ -63,6 +86,8 @@ class SlideSatu : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        autoScrollKehadiran?.cleanup()
+        autoScrollMeeting?.cleanup()
         _binding = null
     }
 }

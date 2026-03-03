@@ -22,7 +22,7 @@ class ProgressAdapter(private var listProgress: List<ProgressDivisi>) :
             val item = listProgress[position]
             holder.binding.tvNamaDivisi.text = item.namaDivisi
             holder.binding.tvProject.text = item.projectProgress
-            holder.binding.tvPersentase.text = item.persentase
+            holder.binding.tvPersentase.text = item.persentase.toString()
         } else {
             holder.binding.tvNamaDivisi.text = ""
             holder.binding.tvProject.text = ""
@@ -30,7 +30,14 @@ class ProgressAdapter(private var listProgress: List<ProgressDivisi>) :
         }
     }
 
-    override fun getItemCount(): Int = 10
+    override fun getItemCount(): Int = listProgress.size + getPlaceholderCount()
+
+    private fun getPlaceholderCount(): Int {
+        // Minimal 10 items untuk mengisi layar
+        val minItemsToFillScreen = 10
+        val placeholderNeeded = minItemsToFillScreen - listProgress.size
+        return if (placeholderNeeded > 0) placeholderNeeded else 0
+    }
 
     @SuppressLint("NotifyDataSetChanged")
     fun updateData(newData: List<ProgressDivisi>) {

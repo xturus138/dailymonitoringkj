@@ -34,7 +34,9 @@ class SlideTigaViewModel @Inject constructor(
     }
 
     private fun loadData() {
-        _chartData.value = repository.getKeberangkatanPMI()
+        viewModelScope.launch {
+            _chartData.value = repository.getKeberangkatanPMI()
+        }
     }
 
     private fun startClock() {

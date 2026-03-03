@@ -1,6 +1,8 @@
 package com.karirjepang.dailymonitoringkj.ui.main
 
 import android.os.Bundle
+import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
@@ -17,12 +19,22 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() {
 
+    private val viewModel: MainViewModel by viewModels()
     private var currentSlideIndex = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        startAutoSlide()
+
+        viewModel.autoLoginBackground()
+
+        viewModel.isLoginSuccessful.observe(this) { success ->
+            if (success) {
+                startAutoSlide()
+            } else {
+                Toast.makeText(this, "Gagal terhubung ke API (Login Failed)", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     private fun startAutoSlide() {
@@ -40,7 +52,7 @@ class MainActivity : FragmentActivity() {
                     setReorderingAllowed(true)
                     replace(R.id.fragmentContainer, fragment)
                 }
-                currentSlideIndex = (currentSlideIndex + 1) % 3
+                currentSlideIndex = (currentSlideIndex + 1) % 4 
 
                 delay(10000)
             }

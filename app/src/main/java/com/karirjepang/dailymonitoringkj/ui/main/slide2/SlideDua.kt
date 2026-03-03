@@ -9,6 +9,8 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.karirjepang.dailymonitoringkj.databinding.FragmentSlideDuaBinding
 import com.karirjepang.dailymonitoringkj.ui.adapter.ProgressAdapter
+import com.karirjepang.dailymonitoringkj.ui.util.AutoScrollManager
+import com.karirjepang.dailymonitoringkj.ui.util.SynchronizedScrollListener
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -21,6 +23,10 @@ class SlideDua : Fragment() {
 
     private var _binding: FragmentSlideDuaBinding? = null
     private val binding get() = _binding!!
+
+    private var autoScrollProgressLeft: AutoScrollManager? = null
+    private var autoScrollProgressRight: AutoScrollManager? = null
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -42,17 +48,34 @@ class SlideDua : Fragment() {
         binding.rvProgressRight.layoutManager = LinearLayoutManager(requireContext())
         binding.rvProgressRight.adapter = progressRightAdapter
 
+        // Setup synchronized scroll between left and right progress
+        binding.rvProgressLeft.addOnScrollListener(SynchronizedScrollListener(binding.rvProgressRight))
+        binding.rvProgressRight.addOnScrollListener(SynchronizedScrollListener(binding.rvProgressLeft))
+
         observeData()
     }
 
     private fun observeData() {
-        viewModel.progressList.observe(viewLifecycleOwner) { data ->
-            val midPoint = (data.size + 1) / 2
-            val leftData = data.take(midPoint)
-            val rightData = data.drop(midPoint)
-
+        viewModel.progressLeftList.observe(viewLifecycleOwner) { leftData ->
             progressLeftAdapter.updateData(leftData)
+
+            // Setup auto-scroll untuk left if needed
+            autoScrollProgressLeft?.stopAutoScroll()
+            if (leftData.size > 5) {
+                autoScrollProgressLeft = AutoScrollManager(binding.rvProgressLeft, delayMillis = 2000, actualDataCount = leftData.size)
+                autoScrollProgressLeft?.startAutoScroll(intervalMillis = 3000)
+            }
+        }
+
+        viewModel.progressRightList.observe(viewLifecycleOwner) { rightData ->
             progressRightAdapter.updateData(rightData)
+
+            // Setup auto-scroll untuk right if needed
+            autoScrollProgressRight?.stopAutoScroll()
+            if (rightData.size > 5) {
+                autoScrollProgressRight = AutoScrollManager(binding.rvProgressRight, delayMillis = 2000, actualDataCount = rightData.size)
+                autoScrollProgressRight?.startAutoScroll(intervalMillis = 3000)
+            }
         }
 
         viewModel.currentDate.observe(viewLifecycleOwner) { date ->
@@ -66,6 +89,9 @@ class SlideDua : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        autoScrollProgressLeft?.cleanup()
+        autoScrollProgressRight?.cleanup()
         _binding = null
     }
 }
+

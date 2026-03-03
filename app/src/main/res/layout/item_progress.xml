@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="30dp"
-    android:gravity="center"
+    android:layout_height="wrap_content"
+    android:minHeight="40dp"
+    android:paddingVertical="8dp"
+    android:gravity="center_vertical"
     android:background="@color/color_secondary"
     android:layout_marginTop="@dimen/dimen_margin_6"
     android:orientation="horizontal">

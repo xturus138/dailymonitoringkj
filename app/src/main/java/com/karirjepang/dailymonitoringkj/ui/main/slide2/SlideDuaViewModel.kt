@@ -22,6 +22,12 @@ class SlideDuaViewModel @Inject constructor(
     private val _progressList = MutableLiveData<List<ProgressDivisi>>()
     val progressList: LiveData<List<ProgressDivisi>> get() = _progressList
 
+    private val _progressLeftList = MutableLiveData<List<ProgressDivisi>>()
+    val progressLeftList: LiveData<List<ProgressDivisi>> get() = _progressLeftList
+
+    private val _progressRightList = MutableLiveData<List<ProgressDivisi>>()
+    val progressRightList: LiveData<List<ProgressDivisi>> get() = _progressRightList
+
     private val _currentDate = MutableLiveData<String>()
     val currentDate: LiveData<String> get() = _currentDate
 
@@ -34,7 +40,18 @@ class SlideDuaViewModel @Inject constructor(
     }
 
     private fun loadData() {
-        _progressList.value = repository.getProgressDivisi()
+        viewModelScope.launch {
+            val fullList = repository.getProgressDivisi()
+            _progressList.value = fullList
+
+            // Split data into left and right
+            val mid = (fullList.size + 1) / 2
+            val leftList = fullList.take(mid)
+            val rightList = fullList.drop(mid)
+
+            _progressLeftList.value = leftList
+            _progressRightList.value = rightList
+        }
     }
 
     private fun startClock() {

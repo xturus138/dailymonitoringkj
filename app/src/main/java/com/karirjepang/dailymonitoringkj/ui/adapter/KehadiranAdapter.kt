@@ -22,15 +22,23 @@ class KehadiranAdapter(private var listKehadiran: List<Kehadiran>) :
             val item = listKehadiran[position]
             holder.binding.tvNamaStaff.text = item.nama
             holder.binding.tvStatus.text = item.status
-            holder.binding.tvKeterangan.text = item.keterangan
+            holder.binding.tvKeterangan.text = item.keterangan ?: ""
         } else {
+            // Placeholder item - tampilkan kotak kosong
             holder.binding.tvNamaStaff.text = ""
             holder.binding.tvStatus.text = ""
             holder.binding.tvKeterangan.text = ""
         }
     }
 
-    override fun getItemCount(): Int = 10
+    override fun getItemCount(): Int = listKehadiran.size + getPlaceholderCount()
+
+    private fun getPlaceholderCount(): Int {
+        // Minimal 10 items untuk mengisi layar
+        val minItemsToFillScreen = 10
+        val placeholderNeeded = minItemsToFillScreen - listKehadiran.size
+        return if (placeholderNeeded > 0) placeholderNeeded else 0
+    }
 
     @SuppressLint("NotifyDataSetChanged")
     fun updateData(newData: List<Kehadiran>) {

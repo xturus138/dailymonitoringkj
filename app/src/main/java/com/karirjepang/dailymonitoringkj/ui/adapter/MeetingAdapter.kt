@@ -27,7 +27,14 @@ class MeetingAdapter(private var listMeeting: List<Meeting>) :
         }
     }
 
-    override fun getItemCount(): Int = 10
+    override fun getItemCount(): Int = listMeeting.size + getPlaceholderCount()
+
+    private fun getPlaceholderCount(): Int {
+        // Minimal 10 items untuk mengisi layar
+        val minItemsToFillScreen = 10
+        val placeholderNeeded = minItemsToFillScreen - listMeeting.size
+        return if (placeholderNeeded > 0) placeholderNeeded else 0
+    }
 
     @SuppressLint("NotifyDataSetChanged")
     fun updateData(newData: List<Meeting>) {

@@ -86,6 +86,14 @@ class SlideTiga : Fragment() {
             setGijinkoku.color = Color.parseColor("#144b78")
             setGijinkoku.valueTextSize = 12f
 
+            val intFormatter = object : ValueFormatter() {
+                override fun getFormattedValue(value: Float): String {
+                    return value.toInt().toString()
+                }
+            }
+            setTokutei.valueFormatter = intFormatter
+            setGijinkoku.valueFormatter = intFormatter
+
             val barData = BarData(setTokutei, setGijinkoku)
 
             val barWidth = 0.35f

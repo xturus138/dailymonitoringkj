@@ -38,8 +38,10 @@ class SlideSatuViewModel @Inject constructor(
     }
 
     private fun loadData() {
-        _kehadiranList.value = repository.getKehadiran()
-        _meetingList.value = repository.getMeeting()
+        viewModelScope.launch {
+            _kehadiranList.value = repository.getKehadiran()
+            _meetingList.value = repository.getMeeting()
+        }
     }
 
     private fun startClock() {

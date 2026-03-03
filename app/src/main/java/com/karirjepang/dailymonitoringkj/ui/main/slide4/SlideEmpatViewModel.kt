@@ -34,7 +34,9 @@ class SlideEmpatViewModel @Inject constructor(
     }
 
     private fun loadData() {
-        _mitraList.value = repository.getDaftarMitra()
+        viewModelScope.launch {
+            _mitraList.value = repository.getDaftarMitra()
+        }
     }
 
     private fun startClock() {
