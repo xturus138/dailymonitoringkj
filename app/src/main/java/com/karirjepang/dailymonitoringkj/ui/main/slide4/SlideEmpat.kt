@@ -9,6 +9,7 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import com.karirjepang.dailymonitoringkj.databinding.FragmentSlideEmpatBinding
 import com.karirjepang.dailymonitoringkj.ui.adapter.MitraAdapter
+import com.karirjepang.dailymonitoringkj.ui.util.ZigZagItemDecoration
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -20,6 +21,8 @@ class SlideEmpat : Fragment() {
     private var _binding: FragmentSlideEmpatBinding? = null
     private val binding get() = _binding!!
 
+    private val spanCount = 6
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
@@ -30,9 +33,10 @@ class SlideEmpat : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        mitraAdapter = MitraAdapter(emptyList())
-        binding.rvMitra.layoutManager = GridLayoutManager(requireContext(), 6)
+        mitraAdapter = MitraAdapter(emptyList(), spanCount)
+        binding.rvMitra.layoutManager = GridLayoutManager(requireContext(), spanCount)
         binding.rvMitra.adapter = mitraAdapter
+        binding.rvMitra.addItemDecoration(ZigZagItemDecoration(spanCount))
 
         observeData()
     }

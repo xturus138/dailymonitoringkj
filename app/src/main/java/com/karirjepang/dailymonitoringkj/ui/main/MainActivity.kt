@@ -31,6 +31,7 @@ class MainActivity : FragmentActivity() {
 
         viewModel.isLoginSuccessful.observe(this) { success ->
             if (success) {
+                viewModel.apiClock.start()
                 startAutoSlide()
             } else {
                 Toast.makeText(this, "Gagal terhubung ke API (Login Failed)", Toast.LENGTH_LONG).show()
@@ -54,6 +55,10 @@ class MainActivity : FragmentActivity() {
                     replace(R.id.fragmentContainer, fragment)
                 }
 
+                // Calculate next slide index and start prefetching its data
+                val nextSlideIndex = (currentSlideIndex + 1) % 4
+                viewModel.prefetchNextSlideData(nextSlideIndex)
+
                 // For slides with scrolling (1 & 2): wait for scroll to finish, THEN 2s end-pause already built-in
                 // For all slides: always wait at least 10 seconds total
                 when (fragment) {
@@ -74,7 +79,7 @@ class MainActivity : FragmentActivity() {
                     }
                 }
 
-                currentSlideIndex = (currentSlideIndex + 1) % 4
+                currentSlideIndex = nextSlideIndex
             }
         }
     }

@@ -1,6 +1,7 @@
 package com.karirjepang.dailymonitoringkj.core.di
 
 import com.karirjepang.dailymonitoringkj.core.network.ApiService
+import com.karirjepang.dailymonitoringkj.core.network.TimeApiService
 import com.karirjepang.dailymonitoringkj.core.network.TokenManager
 import dagger.Module
 import dagger.Provides
@@ -13,10 +14,19 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
+import javax.inject.Qualifier
 import javax.inject.Singleton
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class MainOkHttpClient
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class TimeOkHttpClient
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -39,6 +49,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    @MainOkHttpClient
     fun provideOkHttpClient(authInterceptor: Interceptor): OkHttpClient {
         try {
             // Membuat TrustManager yang mempercayai semua sertifikat (Bypass SSL)
@@ -69,12 +80,35 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideApiService(okHttpClient: OkHttpClient): ApiService {
+    @TimeOkHttpClient
+    fun provideTimeOkHttpClient(): OkHttpClient {
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
+        return OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideApiService(@MainOkHttpClient okHttpClient: OkHttpClient): ApiService {
         return Retrofit.Builder()
             .baseUrl("https://dailymonitoringkj.id/api/")
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(ApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideTimeApiService(@TimeOkHttpClient okHttpClient: OkHttpClient): TimeApiService {
+        return Retrofit.Builder()
+            .baseUrl("https://www.timeapi.io/")
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(TimeApiService::class.java)
     }
 }
