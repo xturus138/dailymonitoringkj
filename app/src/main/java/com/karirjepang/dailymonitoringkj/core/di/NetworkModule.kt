@@ -19,6 +19,7 @@ import javax.inject.Singleton
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
+import java.util.concurrent.TimeUnit
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
@@ -68,6 +69,9 @@ object NetworkModule {
             }
 
             return OkHttpClient.Builder()
+                .connectTimeout(15, TimeUnit.SECONDS)
+                .readTimeout(15, TimeUnit.SECONDS)
+                .writeTimeout(15, TimeUnit.SECONDS)
                 .sslSocketFactory(sslSocketFactory, trustAllCerts[0] as X509TrustManager)
                 .hostnameVerifier { _, _ -> true } // Bypass verifikasi hostname
                 .addInterceptor(authInterceptor)
@@ -86,6 +90,8 @@ object NetworkModule {
             level = HttpLoggingInterceptor.Level.BODY
         }
         return OkHttpClient.Builder()
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(10, TimeUnit.SECONDS)
             .addInterceptor(loggingInterceptor)
             .build()
     }

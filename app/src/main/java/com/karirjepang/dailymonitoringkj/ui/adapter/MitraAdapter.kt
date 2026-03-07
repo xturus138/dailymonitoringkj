@@ -9,8 +9,16 @@ import coil.load
 import com.karirjepang.dailymonitoringkj.core.model.Mitra
 import com.karirjepang.dailymonitoringkj.databinding.ItemMitraBinding
 
+/**
+ * Adapter that reorders Mitra items center-out per row with zig-zag direction.
+ *
+ * Row 0 (even): center → left  → right → left  → right …
+ * Row 1 (odd):  center → right → left  → right → left  …
+ *
+ * Centering of partial rows is handled externally by ItemDecoration.
+ */
 class MitraAdapter(
-    private var listMitra: List<Mitra>,
+    private var listMitra: List<Mitra> = emptyList(),
     private val spanCount: Int = 6
 ) : RecyclerView.Adapter<MitraAdapter.ViewHolder>() {
 
@@ -23,9 +31,9 @@ class MitraAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = listMitra[position]
+
         holder.binding.tvNamaMitra.text = item.nama
 
-        // Hide image until it's fully loaded to avoid the ic_launcher placeholder flash
         holder.binding.ivLogoMitra.visibility = View.INVISIBLE
 
         holder.binding.ivLogoMitra.load(item.logoUrl) {
@@ -35,7 +43,6 @@ class MitraAdapter(
                     holder.binding.ivLogoMitra.visibility = View.VISIBLE
                 },
                 onError = { _, _ ->
-                    // Show placeholder icon on error
                     holder.binding.ivLogoMitra.visibility = View.VISIBLE
                 }
             )
@@ -46,24 +53,15 @@ class MitraAdapter(
 
     @SuppressLint("NotifyDataSetChanged")
     fun updateData(newData: List<Mitra>) {
-        listMitra = reorderCenterOutZigZag(newData)
+        listMitra = reorderCenterOut(newData)
         notifyDataSetChanged()
     }
 
     /**
-     * Reorder items so that within each row, the first items in the
-     * original list are placed at the center columns, then expand outward.
-     *
-     * Even rows (0,2,4…): center → left → right → left → right …
-     * Odd  rows (1,3,5…): center → right → left → right → left …
-     *
-     * Example with spanCount=6, original row data [A,B,C,D,E,F]:
-     *   Row 0 (even): grid positions → [ E, C, A, B, D, F ]
-     *                  (center cols 2,3 get A,B first, then expand L,R)
-     *   Row 1 (odd):  grid positions → [ F, D, B, A, C, E ]
-     *                  (center cols 2,3 get A,B first, then expand R,L)
+     * Reorder data so within each row, items are placed center-out.
+     * Even rows zig left-first, odd rows zig right-first.
      */
-    private fun reorderCenterOutZigZag(data: List<Mitra>): List<Mitra> {
+    private fun reorderCenterOut(data: List<Mitra>): List<Mitra> {
         if (data.isEmpty()) return data
 
         val result = mutableListOf<Mitra>()
@@ -72,38 +70,33 @@ class MitraAdapter(
         for (row in 0 until totalRows) {
             val startIdx = row * spanCount
             val endIdx = minOf(startIdx + spanCount, data.size)
-            val rowItems = data.subList(startIdx, endIdx) // items in original order
+            val rowItems = data.subList(startIdx, endIdx)
             val cols = rowItems.size
 
-            // Build the column placement order: center-out with zig-zag direction
+            // Get center-out column order for this row's item count
             val placementOrder = buildCenterOutOrder(cols, leftFirst = row % 2 == 0)
 
-            // placementOrder[i] = the grid column where the i-th item of this row should go
-            // We need the inverse: for each grid column (0..cols-1), which item index fills it
-            val reordered = Array<Mitra?>(cols) { null }
+            // placementOrder[i] = grid column for the i-th original item
+            // We need: for each grid column 0..cols-1, which item index goes there
+            val reordered = arrayOfNulls<Mitra>(cols)
             for ((itemIdx, gridCol) in placementOrder.withIndex()) {
                 reordered[gridCol] = rowItems[itemIdx]
             }
 
-            reordered.forEach { it?.let { mitra -> result.add(mitra) } }
+            reordered.filterNotNull().forEach { result.add(it) }
         }
 
         return result
     }
 
     /**
-     * Returns a list where index = item order (0=first item, 1=second, …),
-     * value = grid column position where that item is placed.
-     *
-     * Items fill from center outward.
-     * @param leftFirst if true, after center go left first; if false, right first.
+     * For [count] items in a row, return column assignments center-out.
+     * Index = item order (0=first), value = grid column.
      */
     private fun buildCenterOutOrder(count: Int, leftFirst: Boolean): List<Int> {
         if (count == 0) return emptyList()
 
-        val order = mutableListOf<Int>() // each entry = grid column for the next item
-
-        // Start with center column(s)
+        val order = mutableListOf<Int>()
         val midLeft = (count - 1) / 2
         order.add(midLeft)
 

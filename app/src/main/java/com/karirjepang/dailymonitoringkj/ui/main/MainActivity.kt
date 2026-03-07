@@ -27,14 +27,21 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Start clock immediately — it doesn't need auth
+        viewModel.apiClock.start()
+
         viewModel.autoLoginBackground()
 
         viewModel.isLoginSuccessful.observe(this) { success ->
             if (success) {
-                viewModel.apiClock.start()
                 startAutoSlide()
             } else {
-                Toast.makeText(this, "Gagal terhubung ke API (Login Failed)", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Gagal terhubung ke API, mencoba ulang...", Toast.LENGTH_SHORT).show()
+                // Retry login after 5 seconds
+                lifecycleScope.launch {
+                    delay(5000)
+                    viewModel.autoLoginBackground()
+                }
             }
         }
     }

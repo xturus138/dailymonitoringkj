@@ -5,11 +5,15 @@ import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 
 /**
- * Adds a horizontal offset to every odd row in a GridLayoutManager,
- * producing a zig-zag / brick-wall / honeycomb layout.
+ * ItemDecoration that adds a half-column horizontal offset to odd rows
+ * for a zig-zag / honeycomb effect.
  *
- * The offset is half a column width, so odd-row items sit between
- * the columns of even rows.
+ * Works together with [CenteringSpanSizeLookup] which handles centering
+ * of partial (incomplete) rows via span sizes.
+ *
+ * Note: The zig-zag offset is only applied to full rows (rows with
+ * [spanCount] items). Partial rows are already centered by the span lookup
+ * and don't need the offset.
  *
  * @param spanCount number of columns in the grid
  */
@@ -24,13 +28,28 @@ class ZigZagItemDecoration(private val spanCount: Int) : RecyclerView.ItemDecora
         val position = parent.getChildAdapterPosition(view)
         if (position == RecyclerView.NO_POSITION) return
 
+        val totalItems = state.itemCount
         val row = position / spanCount
+        val colInRow = position % spanCount
+        val rowStart = row * spanCount
+        val itemsInRow = minOf(spanCount, totalItems - rowStart)
 
-        if (row % 2 == 1) {
-            // Odd row: shift right by half a column width
+        // Only apply zig-zag offset to full rows on odd row indices
+        if (row % 2 == 1 && itemsInRow == spanCount) {
             val columnWidth = parent.width / spanCount
-            val offset = columnWidth / 2
-            outRect.left = offset
+            val halfColumn = columnWidth / 2
+
+            // Only the first item gets the offset — this pushes the entire
+            // row to the right because GridLayoutManager lays out items
+            // sequentially and the first item's extra left inset shifts
+            // subsequent cells.
+            if (colInRow == 0) {
+                outRect.left = halfColumn
+            } else {
+                outRect.left = 0
+            }
+        } else {
+            outRect.left = 0
         }
     }
 }

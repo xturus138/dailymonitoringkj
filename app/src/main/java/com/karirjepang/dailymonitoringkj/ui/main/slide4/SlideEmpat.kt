@@ -9,6 +9,7 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import com.karirjepang.dailymonitoringkj.databinding.FragmentSlideEmpatBinding
 import com.karirjepang.dailymonitoringkj.ui.adapter.MitraAdapter
+import com.karirjepang.dailymonitoringkj.ui.util.CenteringSpanSizeLookup
 import com.karirjepang.dailymonitoringkj.ui.util.ZigZagItemDecoration
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -34,7 +35,9 @@ class SlideEmpat : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         mitraAdapter = MitraAdapter(emptyList(), spanCount)
-        binding.rvMitra.layoutManager = GridLayoutManager(requireContext(), spanCount)
+        val gridLayoutManager = GridLayoutManager(requireContext(), spanCount)
+        gridLayoutManager.spanSizeLookup = CenteringSpanSizeLookup(spanCount, mitraAdapter)
+        binding.rvMitra.layoutManager = gridLayoutManager
         binding.rvMitra.adapter = mitraAdapter
         binding.rvMitra.addItemDecoration(ZigZagItemDecoration(spanCount))
 
@@ -44,6 +47,9 @@ class SlideEmpat : Fragment() {
     private fun observeData() {
         viewModel.mitraList.observe(viewLifecycleOwner) { data ->
             mitraAdapter.updateData(data)
+            // Invalidate span lookup cache since item count changed
+            (binding.rvMitra.layoutManager as? GridLayoutManager)
+                ?.spanSizeLookup?.invalidateSpanIndexCache()
         }
 
         viewModel.currentDate.observe(viewLifecycleOwner) { date ->
