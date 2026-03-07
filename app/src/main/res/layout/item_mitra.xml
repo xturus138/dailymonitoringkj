@@ -11,7 +11,7 @@
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:scaleType="fitCenter"
-        android:src="@mipmap/ic_launcher" /> <TextView
+        android:visibility="invisible" /> <TextView
     android:id="@+id/tvNamaMitra"
     style="@style/font14.bold"
     android:layout_width="wrap_content"

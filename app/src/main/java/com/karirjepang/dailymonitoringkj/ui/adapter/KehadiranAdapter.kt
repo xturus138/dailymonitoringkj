@@ -10,6 +10,16 @@ import com.karirjepang.dailymonitoringkj.databinding.ItemKehadiranBinding
 class KehadiranAdapter(private var listKehadiran: List<Kehadiran>) :
     RecyclerView.Adapter<KehadiranAdapter.ViewHolder>() {
 
+    // How many rows fit visibly on screen — set from the fragment after first layout
+    private var visibleItemCount: Int = 0
+
+    fun setVisibleItemCount(count: Int) {
+        if (visibleItemCount != count) {
+            visibleItemCount = count
+            notifyDataSetChanged()
+        }
+    }
+
     class ViewHolder(val binding: ItemKehadiranBinding) : RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -24,20 +34,17 @@ class KehadiranAdapter(private var listKehadiran: List<Kehadiran>) :
             holder.binding.tvStatus.text = item.status
             holder.binding.tvKeterangan.text = item.keterangan ?: ""
         } else {
-            // Placeholder item - tampilkan kotak kosong
+            // Placeholder — only shown when data fits within screen
             holder.binding.tvNamaStaff.text = ""
             holder.binding.tvStatus.text = ""
             holder.binding.tvKeterangan.text = ""
         }
     }
 
-    override fun getItemCount(): Int = listKehadiran.size + getPlaceholderCount()
-
-    private fun getPlaceholderCount(): Int {
-        // Minimal 10 items untuk mengisi layar
-        val minItemsToFillScreen = 10
-        val placeholderNeeded = minItemsToFillScreen - listKehadiran.size
-        return if (placeholderNeeded > 0) placeholderNeeded else 0
+    override fun getItemCount(): Int {
+        val placeholders = if (visibleItemCount > listKehadiran.size)
+            visibleItemCount - listKehadiran.size else 0
+        return listKehadiran.size + placeholders
     }
 
     @SuppressLint("NotifyDataSetChanged")

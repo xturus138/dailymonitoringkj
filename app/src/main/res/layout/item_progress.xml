@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:minHeight="40dp"
-    android:paddingVertical="8dp"
+    android:layout_height="56dp"
+    android:paddingVertical="6dp"
     android:gravity="center_vertical"
     android:background="@color/color_secondary"
     android:layout_marginTop="@dimen/dimen_margin_6"
@@ -12,28 +11,37 @@
     <TextView
         android:id="@+id/tvNamaDivisi"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:text="Divisi"
         style="@style/font14.bold"
         android:textAlignment="center"
+        android:gravity="center"
+        android:maxLines="2"
+        android:ellipsize="end"
         android:layout_weight="1"/>
 
     <TextView
         android:id="@+id/tvProject"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:text="Project Progress"
         android:textAlignment="center"
+        android:gravity="center"
+        android:maxLines="2"
+        android:ellipsize="end"
         style="@style/font12.bold"
         android:layout_weight="1.5"/>
 
     <TextView
         android:id="@+id/tvPersentase"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:text="0%"
         style="@style/font14.bold"
         android:textAlignment="center"
+        android:gravity="center"
+        android:maxLines="2"
+        android:ellipsize="end"
         android:layout_weight="1"/>
 
 </LinearLayout>

@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import com.github.mikephil.charting.components.Legend
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
@@ -42,17 +43,16 @@ class SlideTiga : Fragment() {
         chart.setDrawGridBackground(false)
         chart.setPinchZoom(false)
         chart.setScaleEnabled(false)
+        // Give enough room at top so value labels above bars don't collide with the legend
+        chart.setExtraOffsets(0f, 20f, 0f, 0f)
 
         val xAxis = chart.xAxis
         xAxis.position = XAxis.XAxisPosition.BOTTOM
         xAxis.setDrawGridLines(false)
         xAxis.granularity = 1f
         xAxis.setCenterAxisLabels(true)
-
         xAxis.valueFormatter = object : ValueFormatter() {
-            override fun getFormattedValue(value: Float): String {
-                return value.toInt().toString()
-            }
+            override fun getFormattedValue(value: Float): String = value.toInt().toString()
         }
 
         val leftAxis = chart.axisLeft
@@ -62,10 +62,12 @@ class SlideTiga : Fragment() {
         chart.axisRight.isEnabled = false
 
         val legend = chart.legend
-        legend.horizontalAlignment = com.github.mikephil.charting.components.Legend.LegendHorizontalAlignment.CENTER
-        legend.verticalAlignment = com.github.mikephil.charting.components.Legend.LegendVerticalAlignment.TOP
+        legend.horizontalAlignment = Legend.LegendHorizontalAlignment.CENTER
+        legend.verticalAlignment = Legend.LegendVerticalAlignment.TOP
         legend.textSize = 12f
         legend.formSize = 12f
+        // Ensure legend doesn't overlap the bars
+        legend.yOffset = 10f
     }
 
     private fun observeData() {
@@ -79,12 +81,14 @@ class SlideTiga : Fragment() {
             }
 
             val setTokutei = BarDataSet(entriesTokutei, "Tokutei Ginou")
-            setTokutei.color = Color.parseColor("#E74C3C") // Merah
-            setTokutei.valueTextSize = 12f
+            setTokutei.color = Color.parseColor("#E74C3C")
+            setTokutei.valueTextSize = 14f
+            setTokutei.valueTextColor = Color.BLACK
 
             val setGijinkoku = BarDataSet(entriesGijinkoku, "Gijinkoku")
             setGijinkoku.color = Color.parseColor("#144b78")
-            setGijinkoku.valueTextSize = 12f
+            setGijinkoku.valueTextSize = 14f
+            setGijinkoku.valueTextColor = Color.BLACK
 
             val intFormatter = object : ValueFormatter() {
                 override fun getFormattedValue(value: Float): String {

@@ -3,6 +3,7 @@ package com.karirjepang.dailymonitoringkj.ui.main
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
@@ -40,7 +41,7 @@ class MainActivity : FragmentActivity() {
     private fun startAutoSlide() {
         lifecycleScope.launch {
             while (isActive) {
-                val fragment = when (currentSlideIndex) {
+                val fragment: Fragment = when (currentSlideIndex) {
                     0 -> SlideSatu()
                     1 -> SlideDua()
                     2 -> SlideTiga()
@@ -52,9 +53,28 @@ class MainActivity : FragmentActivity() {
                     setReorderingAllowed(true)
                     replace(R.id.fragmentContainer, fragment)
                 }
-                currentSlideIndex = (currentSlideIndex + 1) % 4 
 
-                delay(10000)
+                // For slides with scrolling (1 & 2): wait for scroll to finish, THEN 2s end-pause already built-in
+                // For all slides: always wait at least 10 seconds total
+                when (fragment) {
+                    is SlideSatu -> {
+                        // Wait for scroll to complete (no hard timeout — let it finish)
+                        fragment.awaitScrollFinished()
+                        // After scroll done + 2s keepAtEnd already elapsed,
+                        // add extra delay so slide stays visible
+                        delay(3000)
+                    }
+                    is SlideDua -> {
+                        fragment.awaitScrollFinished()
+                        delay(3000)
+                    }
+                    else -> {
+                        // Slide 3 (chart) & Slide 4 (mitra): just show for 10 seconds
+                        delay(10000)
+                    }
+                }
+
+                currentSlideIndex = (currentSlideIndex + 1) % 4
             }
         }
     }

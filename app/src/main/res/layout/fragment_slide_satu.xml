@@ -78,7 +78,7 @@
             <LinearLayout
                 android:id="@+id/linearLayoutHeaderKehadiran"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="48dp"
                 android:paddingTop="@dimen/dimen_padding_10"
                 android:paddingBottom="@dimen/dimen_padding_10"
                 app:layout_constraintStart_toStartOf="parent"
@@ -92,6 +92,9 @@
                     android:text="NAMA STAFF"
                     style="@style/font14.bold"
                     android:textAlignment="center"
+                    android:gravity="center"
+                    android:singleLine="true"
+                    android:ellipsize="end"
                     android:layout_weight="1"/>
 
                 <TextView
@@ -99,6 +102,9 @@
                     android:layout_height="match_parent"
                     android:text="STATUS KEHADIRAN"
                     android:textAlignment="center"
+                    android:gravity="center"
+                    android:singleLine="true"
+                    android:ellipsize="end"
                     style="@style/font14.bold"
                     android:layout_weight="1.5"/>
 
@@ -108,6 +114,9 @@
                     android:text="KETERANGAN"
                     style="@style/font14.bold"
                     android:textAlignment="center"
+                    android:gravity="center"
+                    android:singleLine="true"
+                    android:ellipsize="end"
                     android:layout_weight="1"/>
 
             </LinearLayout>
@@ -150,7 +159,7 @@
             <LinearLayout
                 android:id="@+id/linearLayoutHeaderMeeting"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="48dp"
                 android:paddingTop="@dimen/dimen_padding_10"
                 android:paddingBottom="@dimen/dimen_padding_10"
                 app:layout_constraintStart_toStartOf="parent"
@@ -164,6 +173,9 @@
                     android:text="WAKTU (WIB)"
                     style="@style/font14.bold"
                     android:textAlignment="center"
+                    android:gravity="center"
+                    android:singleLine="true"
+                    android:ellipsize="end"
                     android:layout_weight="1"/>
 
                 <TextView
@@ -171,6 +183,9 @@
                     android:layout_height="match_parent"
                     android:text="JUDUL MEETING"
                     android:textAlignment="center"
+                    android:gravity="center"
+                    android:singleLine="true"
+                    android:ellipsize="end"
                     style="@style/font14.bold"
                     android:layout_weight="1.5"/>
 

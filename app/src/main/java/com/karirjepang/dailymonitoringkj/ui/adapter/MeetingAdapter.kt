@@ -9,6 +9,16 @@ import com.karirjepang.dailymonitoringkj.databinding.ItemMeetingBinding
 
 class MeetingAdapter(private var listMeeting: List<Meeting>) :
     RecyclerView.Adapter<MeetingAdapter.ViewHolder>() {
+
+    private var visibleItemCount: Int = 0
+
+    fun setVisibleItemCount(count: Int) {
+        if (visibleItemCount != count) {
+            visibleItemCount = count
+            notifyDataSetChanged()
+        }
+    }
+
     class ViewHolder(val binding: ItemMeetingBinding) : RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -27,13 +37,10 @@ class MeetingAdapter(private var listMeeting: List<Meeting>) :
         }
     }
 
-    override fun getItemCount(): Int = listMeeting.size + getPlaceholderCount()
-
-    private fun getPlaceholderCount(): Int {
-        // Minimal 10 items untuk mengisi layar
-        val minItemsToFillScreen = 10
-        val placeholderNeeded = minItemsToFillScreen - listMeeting.size
-        return if (placeholderNeeded > 0) placeholderNeeded else 0
+    override fun getItemCount(): Int {
+        val placeholders = if (visibleItemCount > listMeeting.size)
+            visibleItemCount - listMeeting.size else 0
+        return listMeeting.size + placeholders
     }
 
     @SuppressLint("NotifyDataSetChanged")
