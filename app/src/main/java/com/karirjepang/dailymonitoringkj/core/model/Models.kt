@@ -20,6 +20,7 @@ data class User(
 )
 
 data class Kehadiran(
+    @SerializedName("date") val date: String?,
     @SerializedName("status") val status: String,
     @SerializedName("note") val keterangan: String?,
     @SerializedName("user") val userObj: UserAttendance?
@@ -37,6 +38,7 @@ data class Meeting(
 )
 
 data class ProgressDivisi(
+    @SerializedName("report_date") val reportDate: String?,
     @SerializedName("job_description") val projectProgress: String?,
     @SerializedName("progress_percentage") val persentaseInt: Int?,
     @SerializedName("division") val divisionObj: Division?

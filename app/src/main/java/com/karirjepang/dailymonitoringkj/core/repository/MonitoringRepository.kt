@@ -3,13 +3,15 @@ package com.karirjepang.dailymonitoringkj.core.repository
 import com.karirjepang.dailymonitoringkj.core.model.*
 import com.karirjepang.dailymonitoringkj.core.network.ApiService
 import com.karirjepang.dailymonitoringkj.core.network.TokenManager
+import com.karirjepang.dailymonitoringkj.ui.util.ApiClock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class MonitoringRepository @Inject constructor(
     private val apiService: ApiService,
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val apiClock: ApiClock
 ) {
 
 
@@ -30,7 +32,12 @@ class MonitoringRepository @Inject constructor(
     suspend fun getKehadiran(): List<Kehadiran> = withContext(Dispatchers.IO) {
         try {
             val response = apiService.getAttendances()
-            if (response.isSuccessful) response.body() ?: emptyList() else emptyList()
+            if (response.isSuccessful) {
+                val today = apiClock.getTodayDateString()
+                (response.body() ?: emptyList()).filter {
+                    it.date?.take(10) == today
+                }
+            } else emptyList()
         } catch (e: Exception) { emptyList() }
     }
 
@@ -44,7 +51,12 @@ class MonitoringRepository @Inject constructor(
     suspend fun getProgressDivisi(): List<ProgressDivisi> = withContext(Dispatchers.IO) {
         try {
             val response = apiService.getDivisionReports()
-            if (response.isSuccessful) response.body() ?: emptyList() else emptyList()
+            if (response.isSuccessful) {
+                val today = apiClock.getTodayDateString()
+                (response.body() ?: emptyList()).filter {
+                    it.reportDate?.take(10) == today
+                }
+            } else emptyList()
         } catch (e: Exception) { emptyList() }
     }
 
@@ -70,7 +82,7 @@ class MonitoringRepository @Inject constructor(
                         }
                     }
                     KeberangkatanPMI(year, tokutei, gijinkoku)
-                }.filter { it.tahun > 0f }.sortedBy { it.tahun }
+                }.filter { it.tahun > 0f }.sortedBy { it.tahun }.takeLast(4)
             } else {
                 emptyList()
             }

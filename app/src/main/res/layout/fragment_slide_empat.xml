@@ -10,6 +10,20 @@
     android:paddingTop="@dimen/dimen_padding_35"
     android:paddingBottom="@dimen/dimen_padding_35">
 
+    <!-- Watermark logo background -->
+    <ImageView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:src="@drawable/karirjepang"
+        android:alpha="0.08"
+        android:scaleType="fitCenter"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintHeight_percent="0.85"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
     <TextView
         android:id="@+id/currentDateTime"
         style="@style/font24.bold"
@@ -21,7 +35,7 @@
 
     <TextView
         android:id="@+id/currentDayTime"
-        style="@style/font16.bold"
+        style="@style/font20.bold"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="10:00:01 WIB"
@@ -42,7 +56,7 @@
         style="@style/font24.bold"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="@dimen/dimen_margin_12"
         android:text="DAFTAR MITRA KARIR JEPANG"
         android:textAlignment="center"
         app:layout_constraintEnd_toEndOf="parent"
@@ -53,7 +67,7 @@
         android:id="@+id/rvMitra"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="24dp"
         android:clipToPadding="false"
         android:clipChildren="false"
         app:layout_constraintBottom_toBottomOf="parent"

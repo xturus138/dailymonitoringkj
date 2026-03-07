@@ -139,5 +139,16 @@ class ApiClock @Inject constructor(
         _currentDate.postValue(dateStr)
         _currentTime.postValue(timeStr)
     }
+
+    /**
+     * Returns today's date as "yyyy-MM-dd" (e.g. "2026-03-07") based on the
+     * API-synced clock. Used to filter data that should only show today's entries.
+     */
+    fun getTodayDateString(): String {
+        val year = calendar.get(Calendar.YEAR)
+        val month = calendar.get(Calendar.MONTH) + 1
+        val day = calendar.get(Calendar.DAY_OF_MONTH)
+        return String.format(Locale.US, "%04d-%02d-%02d", year, month, day)
+    }
 }
 

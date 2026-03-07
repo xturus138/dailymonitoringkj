@@ -66,24 +66,27 @@ class MainActivity : FragmentActivity() {
                 val nextSlideIndex = (currentSlideIndex + 1) % 4
                 viewModel.prefetchNextSlideData(nextSlideIndex)
 
-                // For slides with scrolling (1 & 2): wait for scroll to finish, THEN 2s end-pause already built-in
-                // For all slides: always wait at least 10 seconds total
+                // All slides must be visible for at least 10 seconds.
+                // For scroll slides: wait for scroll + extra pause, but never less than 10s total.
+                val startTime = System.currentTimeMillis()
+                val minDisplayMs = 10_000L
+
                 when (fragment) {
                     is SlideSatu -> {
-                        // Wait for scroll to complete (no hard timeout — let it finish)
                         fragment.awaitScrollFinished()
-                        // After scroll done + 2s keepAtEnd already elapsed,
-                        // add extra delay so slide stays visible
                         delay(3000)
                     }
                     is SlideDua -> {
                         fragment.awaitScrollFinished()
                         delay(3000)
                     }
-                    else -> {
-                        // Slide 3 (chart) & Slide 4 (mitra): just show for 10 seconds
-                        delay(10000)
-                    }
+                }
+
+                // Ensure minimum display time for ALL slides
+                val elapsed = System.currentTimeMillis() - startTime
+                val remaining = minDisplayMs - elapsed
+                if (remaining > 0) {
+                    delay(remaining)
                 }
 
                 currentSlideIndex = nextSlideIndex
