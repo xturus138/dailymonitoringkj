@@ -33,11 +33,19 @@ class KehadiranAdapter(private var listKehadiran: List<Kehadiran>) :
             holder.binding.tvNamaStaff.text = item.nama
             holder.binding.tvStatus.text = item.status
             holder.binding.tvKeterangan.text = item.keterangan ?: ""
+
+            // Munculkan pemisah
+            holder.binding.tvSeparator1.visibility = android.view.View.VISIBLE
+            holder.binding.tvSeparator2.visibility = android.view.View.VISIBLE
         } else {
             // Placeholder — only shown when data fits within screen
             holder.binding.tvNamaStaff.text = ""
             holder.binding.tvStatus.text = ""
             holder.binding.tvKeterangan.text = ""
+
+            // Sembunyikan pemisah
+            holder.binding.tvSeparator1.visibility = android.view.View.INVISIBLE
+            holder.binding.tvSeparator2.visibility = android.view.View.INVISIBLE
         }
     }
 

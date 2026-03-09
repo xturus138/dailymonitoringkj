@@ -1,7 +1,9 @@
 package com.karirjepang.dailymonitoringkj.core.di
 
+import com.karirjepang.dailymonitoringkj.BuildConfig
 import com.karirjepang.dailymonitoringkj.core.network.ApiService
 import com.karirjepang.dailymonitoringkj.core.network.TimeApiService
+import com.karirjepang.dailymonitoringkj.core.network.TokenAuthenticator
 import com.karirjepang.dailymonitoringkj.core.network.TokenManager
 import dagger.Module
 import dagger.Provides
@@ -14,12 +16,12 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
+import java.util.concurrent.TimeUnit
 import javax.inject.Qualifier
 import javax.inject.Singleton
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
-import java.util.concurrent.TimeUnit
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
@@ -51,35 +53,34 @@ object NetworkModule {
     @Provides
     @Singleton
     @MainOkHttpClient
-    fun provideOkHttpClient(authInterceptor: Interceptor): OkHttpClient {
-        try {
-            // Membuat TrustManager yang mempercayai semua sertifikat (Bypass SSL)
-            val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
-                override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
-                override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
-                override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
-            })
+    fun provideOkHttpClient(
+        authInterceptor: Interceptor,
+        tokenAuthenticator: TokenAuthenticator
+    ): OkHttpClient {
+        val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
+            override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+            override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+            override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+        })
 
-            val sslContext = SSLContext.getInstance("SSL")
-            sslContext.init(null, trustAllCerts, SecureRandom())
-            val sslSocketFactory = sslContext.socketFactory
+        val sslContext = SSLContext.getInstance("SSL")
+        sslContext.init(null, trustAllCerts, SecureRandom())
 
-            val loggingInterceptor = HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BODY
-            }
-
-            return OkHttpClient.Builder()
-                .connectTimeout(15, TimeUnit.SECONDS)
-                .readTimeout(15, TimeUnit.SECONDS)
-                .writeTimeout(15, TimeUnit.SECONDS)
-                .sslSocketFactory(sslSocketFactory, trustAllCerts[0] as X509TrustManager)
-                .hostnameVerifier { _, _ -> true } // Bypass verifikasi hostname
-                .addInterceptor(authInterceptor)
-                .addInterceptor(loggingInterceptor)
-                .build()
-        } catch (e: Exception) {
-            throw RuntimeException(e)
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY
+                    else HttpLoggingInterceptor.Level.NONE
         }
+
+        return OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(15, TimeUnit.SECONDS)
+            .writeTimeout(15, TimeUnit.SECONDS)
+            .sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
+            .hostnameVerifier { _, _ -> true }
+            .addInterceptor(authInterceptor)
+            .addInterceptor(loggingInterceptor)
+            .authenticator(tokenAuthenticator)
+            .build()
     }
 
     @Provides
@@ -87,7 +88,8 @@ object NetworkModule {
     @TimeOkHttpClient
     fun provideTimeOkHttpClient(): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY
+                    else HttpLoggingInterceptor.Level.NONE
         }
         return OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)

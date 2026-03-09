@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Network Security Config for devices running Android 6.0+ (API 23+).
+
+    Problem: Older Android devices (API 23-24) don't trust newer CA roots
+    (e.g. ISRG Root X1 from Let's Encrypt used by Hostinger).
+
+    Solution: Trust both system CAs AND the app-bundled Let's Encrypt root.
+    This is the SECURE alternative to bypassing SSL entirely.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <!-- Trust default system CAs -->
+            <certificates src="system" />
+            <!-- Trust bundled CAs for older devices missing newer roots -->
+            <certificates src="@raw/lets_encrypt_isrg_root_x1" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
+

@@ -13,4 +13,5 @@
     
     <!--text color-->
     <color name="dark_blue">#144b78</color>
+    <color name="merah_judul">#FF0000</color>
 </resources>

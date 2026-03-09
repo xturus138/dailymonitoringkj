@@ -5,6 +5,15 @@ plugins {
     id("dagger.hilt.android.plugin")
 }
 
+import java.util.Properties
+
+// Read credentials from local.properties
+val localProperties = Properties()
+val localFile = rootProject.file("local.properties")
+if (localFile.exists()) {
+    localFile.reader().use { localProperties.load(it) }
+}
+
 android {
     namespace = "com.karirjepang.dailymonitoringkj"
     compileSdk {
@@ -18,6 +27,8 @@ android {
         versionCode = 1
         versionName = "1.0"
 
+        buildConfigField("String", "API_EMAIL", "\"${localProperties.getProperty("api.email", "")}\"")
+        buildConfigField("String", "API_PASSWORD", "\"${localProperties.getProperty("api.password", "")}\"")
     }
 
     buildTypes {
@@ -38,6 +49,7 @@ android {
     }
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 
@@ -62,4 +74,6 @@ dependencies {
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
+
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 }

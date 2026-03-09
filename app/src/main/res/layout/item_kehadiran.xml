@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="56dp"
+    android:layout_height="@dimen/signage_row_height"
     android:paddingVertical="6dp"
     android:gravity="center_vertical"
     android:background="@color/color_secondary"
@@ -21,6 +21,14 @@
         android:layout_weight="1"/>
 
     <TextView
+        android:id="@+id/tvSeparator1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:text=">"
+        style="@style/font14.bold" />
+
+    <TextView
         android:id="@+id/tvStatus"
         android:layout_width="0dp"
         android:layout_height="match_parent"
@@ -31,6 +39,14 @@
         android:ellipsize="end"
         style="@style/font14.bold"
         android:layout_weight="1.5"/>
+
+    <TextView
+        android:id="@+id/tvSeparator2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:text=">"
+        style="@style/font14.bold" />
 
     <TextView
         android:id="@+id/tvKeterangan"

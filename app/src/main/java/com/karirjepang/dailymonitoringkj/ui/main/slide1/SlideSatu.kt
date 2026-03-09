@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
+import com.karirjepang.dailymonitoringkj.R
 import com.karirjepang.dailymonitoringkj.databinding.FragmentSlideSatuBinding
 import com.karirjepang.dailymonitoringkj.ui.adapter.KehadiranAdapter
 import com.karirjepang.dailymonitoringkj.ui.adapter.MeetingAdapter
@@ -68,7 +69,10 @@ class SlideSatu : Fragment() {
     /** Calculate how many rows fit in each RecyclerView and tell the adapters.
      *  Row height = 56dp item + 6dp marginTop = 62dp total per row. */
     private fun updateVisibleCounts() {
-        val itemHeightPx = (62 * resources.displayMetrics.density + 0.5f).toInt()
+        val rowHeightPx = resources.getDimensionPixelSize(R.dimen.signage_row_height)
+        val marginPx = resources.getDimensionPixelSize(R.dimen.dimen_margin_6)
+        val itemHeightPx = rowHeightPx + marginPx
+
         if (itemHeightPx <= 0) return
 
         val rvKehadiranHeight = binding.rvKehadiran.height
@@ -99,14 +103,6 @@ class SlideSatu : Fragment() {
             meetingAdapter.updateData(data)
             binding.rvMeeting.post { updateVisibleCounts() }
             rebuildScrollManager()
-        }
-
-        viewModel.currentDate.observe(viewLifecycleOwner) { date ->
-            binding.currentDateTime.text = date
-        }
-
-        viewModel.currentTime.observe(viewLifecycleOwner) { time ->
-            binding.currentDayTime.text = time
         }
     }
 

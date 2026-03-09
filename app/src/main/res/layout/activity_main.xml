@@ -1,8 +1,118 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.fragment.app.FragmentContainerView
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/fragmentContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.main.MainActivity" />
+    android:background="@color/background"
+    android:keepScreenOn="true"
+    android:paddingStart="@dimen/dimen_padding_48"
+    android:paddingEnd="@dimen/dimen_padding_48"
+    android:paddingTop="@dimen/dimen_padding_35"
+    android:paddingBottom="@dimen/dimen_padding_35"
+    tools:context=".ui.main.MainActivity">
+
+    <!-- Watermark logo background — always visible -->
+    <ImageView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:src="@drawable/karirjepang"
+        android:alpha="0.08"
+        android:scaleType="fitCenter"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintHeight_percent="0.85"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <!-- Date — always visible -->
+    <TextView
+        android:id="@+id/currentDateTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/font24.bold"
+        android:text=""
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Time — always visible -->
+    <TextView
+        android:id="@+id/currentDayTime"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        style="@style/font20.bold"
+        android:text=""
+        android:textAlignment="textStart"
+        app:layout_constraintStart_toStartOf="@id/currentDateTime"
+        app:layout_constraintTop_toBottomOf="@id/currentDateTime"
+        app:layout_constraintEnd_toEndOf="@id/currentDateTime" />
+
+    <!-- Status indicator — only visible when data refresh has issues -->
+    <TextView
+        android:id="@+id/tvStatusIndicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="⚠ Data belum diperbarui"
+        android:textSize="12sp"
+        android:textColor="#FFFFFF"
+        android:background="@android:color/holo_red_dark"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toStartOf="@id/ivLogo"
+        app:layout_constraintTop_toTopOf="@id/currentDayTime"
+        app:layout_constraintBottom_toBottomOf="@id/currentDayTime"
+        android:layout_marginEnd="8dp" />
+
+    <!-- Logo — always visible -->
+    <ImageView
+        android:id="@+id/ivLogo"
+        android:layout_width="@dimen/signage_logo_header_width"
+        android:layout_height="0dp"
+        android:src="@drawable/karirjepang"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/currentDateTime"
+        app:layout_constraintBottom_toBottomOf="@id/currentDayTime" />
+
+    <!-- Last updated indicator — bottom-right, below content -->
+    <TextView
+        android:id="@+id/tvLastUpdated"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="11sp"
+        android:textColor="@color/dark_blue"
+        android:alpha="0.45"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <!-- Fragment container — only this part fades during transitions -->
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/fragmentContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="@dimen/dimen_margin_12"
+        app:layout_constraintTop_toBottomOf="@id/currentDayTime"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/tvLastUpdated" />
+
+    <!-- Loading/status overlay — shown before login succeeds, hidden once slides start -->
+    <TextView
+        android:id="@+id/tvLoadingStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Menghubungkan ke server..."
+        android:textSize="16sp"
+        android:textColor="@color/dark_blue"
+        android:alpha="0.6"
+        app:layout_constraintStart_toStartOf="@id/fragmentContainer"
+        app:layout_constraintEnd_toEndOf="@id/fragmentContainer"
+        app:layout_constraintTop_toTopOf="@id/fragmentContainer"
+        app:layout_constraintBottom_toBottomOf="@id/fragmentContainer" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

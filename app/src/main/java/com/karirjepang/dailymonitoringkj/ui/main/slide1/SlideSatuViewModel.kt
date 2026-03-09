@@ -5,19 +5,18 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.karirjepang.dailymonitoringkj.core.cache.SlideDataCache
+import com.karirjepang.dailymonitoringkj.core.cache.CachedDataManager
 import com.karirjepang.dailymonitoringkj.core.model.Kehadiran
 import com.karirjepang.dailymonitoringkj.core.model.Meeting
-import com.karirjepang.dailymonitoringkj.core.repository.MonitoringRepository
 import com.karirjepang.dailymonitoringkj.ui.util.ApiClock
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class SlideSatuViewModel @Inject constructor(
-    private val repository: MonitoringRepository,
-    private val slideDataCache: SlideDataCache,
+    private val cachedDataManager: CachedDataManager,
     private val apiClock: ApiClock
 ) : ViewModel() {
 
@@ -33,20 +32,20 @@ class SlideSatuViewModel @Inject constructor(
     val currentTime: LiveData<String> get() = apiClock.currentTime
 
     init {
-        loadData()
+        observeCachedData()
     }
 
-    private fun loadData() {
+    private fun observeCachedData() {
         viewModelScope.launch {
-            val cached = slideDataCache.consumeSlide1Data()
-            if (cached != null) {
-                Log.d(TAG, "Using prefetched data from cache")
-                _kehadiranList.value = cached.first
-                _meetingList.value = cached.second
-            } else {
-                Log.d(TAG, "No cache available, fetching from API")
-                _kehadiranList.value = repository.getKehadiran()
-                _meetingList.value = repository.getMeeting()
+            cachedDataManager.kehadiranList.collectLatest { data ->
+                Log.d(TAG, "Kehadiran from cache: ${data.size} items")
+                _kehadiranList.value = data
+            }
+        }
+        viewModelScope.launch {
+            cachedDataManager.meetingList.collectLatest { data ->
+                Log.d(TAG, "Meeting from cache: ${data.size} items")
+                _meetingList.value = data
             }
         }
     }

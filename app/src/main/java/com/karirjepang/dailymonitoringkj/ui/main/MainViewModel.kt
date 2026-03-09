@@ -5,8 +5,10 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.karirjepang.dailymonitoringkj.core.cache.SlideDataCache
+import com.karirjepang.dailymonitoringkj.BuildConfig
+import com.karirjepang.dailymonitoringkj.core.cache.CachedDataManager
 import com.karirjepang.dailymonitoringkj.core.model.LoginRequest
+import com.karirjepang.dailymonitoringkj.core.network.NetworkMonitor
 import com.karirjepang.dailymonitoringkj.core.repository.MonitoringRepository
 import com.karirjepang.dailymonitoringkj.ui.util.ApiClock
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,7 +18,8 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val repository: MonitoringRepository,
-    val slideDataCache: SlideDataCache,
+    val cachedDataManager: CachedDataManager,
+    val networkMonitor: NetworkMonitor,
     val apiClock: ApiClock
 ) : ViewModel() {
 
@@ -25,44 +28,34 @@ class MainViewModel @Inject constructor(
     private val _isLoginSuccessful = MutableLiveData<Boolean>()
     val isLoginSuccessful: LiveData<Boolean> get() = _isLoginSuccessful
 
-    fun autoLoginBackground() {
-        viewModelScope.launch {
-            val request = LoginRequest("adminkj@gmail.com", "Kerjajepang12$")
-            val result = repository.login(request)
+    @Volatile
+    private var isLoggingIn = false
 
-            _isLoginSuccessful.value = result.isSuccess
+    fun autoLoginBackground() {
+        if (isLoggingIn) {
+            Log.d(TAG, "Login already in progress — skipping")
+            return
+        }
+        isLoggingIn = true
+        viewModelScope.launch {
+            try {
+                Log.d(TAG, "Starting login...")
+                val request = LoginRequest(BuildConfig.API_EMAIL, BuildConfig.API_PASSWORD)
+                val result = repository.login(request)
+                _isLoginSuccessful.value = result.isSuccess
+                Log.d(TAG, "Login result: ${result.isSuccess}")
+            } finally {
+                isLoggingIn = false
+            }
         }
     }
 
     /**
-     * Prefetch data for the next slide while the current slide is being displayed.
-     * Called from MainActivity during each slide's display time.
-     *
-     * @param nextSlideIndex The index of the next slide (0-3)
+     * Starts the centralized 5-minute auto-refresh cycle.
+     * Called once after successful login. Safe to call multiple times.
      */
-    fun prefetchNextSlideData(nextSlideIndex: Int) {
-        viewModelScope.launch {
-            Log.d(TAG, "Prefetching data for slide $nextSlideIndex")
-            when (nextSlideIndex) {
-                0 -> {
-                    val kehadiran = repository.getKehadiran()
-                    val meeting = repository.getMeeting()
-                    slideDataCache.storeSlide1Data(kehadiran, meeting)
-                }
-                1 -> {
-                    val progressDivisi = repository.getProgressDivisi()
-                    slideDataCache.storeSlide2Data(progressDivisi)
-                }
-                2 -> {
-                    val keberangkatanPMI = repository.getKeberangkatanPMI()
-                    slideDataCache.storeSlide3Data(keberangkatanPMI)
-                }
-                3 -> {
-                    val mitra = repository.getDaftarMitra()
-                    slideDataCache.storeSlide4Data(mitra)
-                }
-            }
-            Log.d(TAG, "Prefetch complete for slide $nextSlideIndex")
-        }
+    fun startCacheRefresh() {
+        Log.d(TAG, "Starting centralized cache refresh cycle")
+        cachedDataManager.startAutoRefresh(viewModelScope)
     }
 }

@@ -5,18 +5,17 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.karirjepang.dailymonitoringkj.core.cache.SlideDataCache
+import com.karirjepang.dailymonitoringkj.core.cache.CachedDataManager
 import com.karirjepang.dailymonitoringkj.core.model.ProgressDivisi
-import com.karirjepang.dailymonitoringkj.core.repository.MonitoringRepository
 import com.karirjepang.dailymonitoringkj.ui.util.ApiClock
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class SlideDuaViewModel @Inject constructor(
-    private val repository: MonitoringRepository,
-    private val slideDataCache: SlideDataCache,
+    private val cachedDataManager: CachedDataManager,
     private val apiClock: ApiClock
 ) : ViewModel() {
 
@@ -35,28 +34,19 @@ class SlideDuaViewModel @Inject constructor(
     val currentTime: LiveData<String> get() = apiClock.currentTime
 
     init {
-        loadData()
+        observeCachedData()
     }
 
-    private fun loadData() {
+    private fun observeCachedData() {
         viewModelScope.launch {
-            val cached = slideDataCache.consumeSlide2Data()
-            val fullList = if (cached != null) {
-                Log.d(TAG, "Using prefetched data from cache")
-                cached
-            } else {
-                Log.d(TAG, "No cache available, fetching from API")
-                repository.getProgressDivisi()
+            cachedDataManager.progressDivisiList.collectLatest { fullList ->
+                Log.d(TAG, "ProgressDivisi from cache: ${fullList.size} items")
+                _progressList.value = fullList
+
+                val mid = (fullList.size + 1) / 2
+                _progressLeftList.value = fullList.take(mid)
+                _progressRightList.value = fullList.drop(mid)
             }
-
-            _progressList.value = fullList
-
-            val mid = (fullList.size + 1) / 2
-            val leftList = fullList.take(mid)
-            val rightList = fullList.drop(mid)
-
-            _progressLeftList.value = leftList
-            _progressRightList.value = rightList
         }
     }
 }

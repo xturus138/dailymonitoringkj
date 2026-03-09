@@ -22,7 +22,7 @@ class SlideEmpat : Fragment() {
     private var _binding: FragmentSlideEmpatBinding? = null
     private val binding get() = _binding!!
 
-    private val spanCount = 6
+    private val spanCount = 5
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -50,14 +50,6 @@ class SlideEmpat : Fragment() {
             // Invalidate span lookup cache since item count changed
             (binding.rvMitra.layoutManager as? GridLayoutManager)
                 ?.spanSizeLookup?.invalidateSpanIndexCache()
-        }
-
-        viewModel.currentDate.observe(viewLifecycleOwner) { date ->
-            binding.currentDateTime.text = date
-        }
-
-        viewModel.currentTime.observe(viewLifecycleOwner) { time ->
-            binding.currentDayTime.text = time
         }
     }
 

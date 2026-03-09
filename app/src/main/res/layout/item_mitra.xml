@@ -8,16 +8,17 @@
 
     <ImageView
         android:id="@+id/ivLogoMitra"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="@dimen/signage_mitra_logo_size"
+        android:layout_height="@dimen/signage_mitra_logo_size"
         android:scaleType="fitCenter"
-        android:visibility="invisible" /> <TextView
-    android:id="@+id/tvNamaMitra"
-    style="@style/font14.bold"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="@dimen/dimen_margin_8"
-    android:text="Nama Mitra"
-    android:textColor="@color/dark_blue"
-    android:textAlignment="center" />
+        android:visibility="invisible" />
+
+    <TextView
+        android:id="@+id/tvNamaMitra"
+        style="@style/font20.bold" android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/dimen_margin_8"
+        android:text="Nama Mitra"
+        android:textColor="@color/dark_blue"
+        android:textAlignment="center" />
 </LinearLayout>

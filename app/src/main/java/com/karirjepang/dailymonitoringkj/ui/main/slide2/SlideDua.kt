@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
+import com.karirjepang.dailymonitoringkj.R
 import com.karirjepang.dailymonitoringkj.databinding.FragmentSlideDuaBinding
 import com.karirjepang.dailymonitoringkj.ui.adapter.ProgressDualAdapter
 import com.karirjepang.dailymonitoringkj.ui.util.ContinuousScrollManager
@@ -59,7 +60,10 @@ class SlideDua : Fragment() {
     /** Calculate how many rows fit in the RecyclerView.
      *  Row height = 56dp item + 6dp marginTop = 62dp total per row. */
     private fun updateVisibleCount() {
-        val itemHeightPx = (62 * resources.displayMetrics.density + 0.5f).toInt()
+        val rowHeightPx = resources.getDimensionPixelSize(R.dimen.signage_row_height)
+        val marginPx = resources.getDimensionPixelSize(R.dimen.dimen_margin_6)
+        val itemHeightPx = rowHeightPx + marginPx
+
         if (itemHeightPx <= 0) return
 
         val rvHeight = binding.rvProgress.height
@@ -75,14 +79,6 @@ class SlideDua : Fragment() {
             dataRowCount = progressAdapter.getDataRowCount()
             binding.rvProgress.post { updateVisibleCount() }
             rebuildScrollManager()
-        }
-
-        viewModel.currentDate.observe(viewLifecycleOwner) { date ->
-            binding.currentDateTime.text = date
-        }
-
-        viewModel.currentTime.observe(viewLifecycleOwner) { time ->
-            binding.currentDayTime.text = time
         }
     }
 

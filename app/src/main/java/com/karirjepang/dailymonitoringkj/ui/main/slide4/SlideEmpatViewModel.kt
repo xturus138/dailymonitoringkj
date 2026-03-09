@@ -5,18 +5,17 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.karirjepang.dailymonitoringkj.core.cache.SlideDataCache
+import com.karirjepang.dailymonitoringkj.core.cache.CachedDataManager
 import com.karirjepang.dailymonitoringkj.core.model.Mitra
-import com.karirjepang.dailymonitoringkj.core.repository.MonitoringRepository
 import com.karirjepang.dailymonitoringkj.ui.util.ApiClock
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class SlideEmpatViewModel @Inject constructor(
-    private val repository: MonitoringRepository,
-    private val slideDataCache: SlideDataCache,
+    private val cachedDataManager: CachedDataManager,
     private val apiClock: ApiClock
 ) : ViewModel() {
 
@@ -29,18 +28,14 @@ class SlideEmpatViewModel @Inject constructor(
     val currentTime: LiveData<String> get() = apiClock.currentTime
 
     init {
-        loadData()
+        observeCachedData()
     }
 
-    private fun loadData() {
+    private fun observeCachedData() {
         viewModelScope.launch {
-            val cached = slideDataCache.consumeSlide4Data()
-            if (cached != null) {
-                Log.d(TAG, "Using prefetched data from cache")
-                _mitraList.value = cached
-            } else {
-                Log.d(TAG, "No cache available, fetching from API")
-                _mitraList.value = repository.getDaftarMitra()
+            cachedDataManager.mitraList.collectLatest { data ->
+                Log.d(TAG, "Mitra from cache: ${data.size} items")
+                _mitraList.value = data
             }
         }
     }

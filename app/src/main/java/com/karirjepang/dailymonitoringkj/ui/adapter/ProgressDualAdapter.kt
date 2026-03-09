@@ -52,10 +52,14 @@ class ProgressDualAdapter(
             holder.binding.tvNamaDivisiLeft.text = item.namaDivisi
             holder.binding.tvProjectLeft.text = item.projectProgress
             holder.binding.tvPersentaseLeft.text = item.persentase
+            holder.binding.tvSeparatorLeft1.visibility = android.view.View.VISIBLE
+            holder.binding.tvSeparatorLeft2.visibility = android.view.View.VISIBLE
         } else {
             holder.binding.tvNamaDivisiLeft.text = ""
             holder.binding.tvProjectLeft.text = ""
             holder.binding.tvPersentaseLeft.text = ""
+            holder.binding.tvSeparatorLeft1.visibility = android.view.View.INVISIBLE
+            holder.binding.tvSeparatorLeft2.visibility = android.view.View.INVISIBLE
         }
 
         // Right column data index
@@ -65,10 +69,14 @@ class ProgressDualAdapter(
             holder.binding.tvNamaDivisiRight.text = item.namaDivisi
             holder.binding.tvProjectRight.text = item.projectProgress
             holder.binding.tvPersentaseRight.text = item.persentase
+            holder.binding.tvSeparatorRight1.visibility = android.view.View.VISIBLE
+            holder.binding.tvSeparatorRight2.visibility = android.view.View.VISIBLE
         } else {
             holder.binding.tvNamaDivisiRight.text = ""
             holder.binding.tvProjectRight.text = ""
             holder.binding.tvPersentaseRight.text = ""
+            holder.binding.tvSeparatorRight1.visibility = android.view.View.INVISIBLE
+            holder.binding.tvSeparatorRight2.visibility = android.view.View.INVISIBLE
         }
     }
 

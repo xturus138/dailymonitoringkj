@@ -43,6 +43,13 @@ class ApiClock @Inject constructor(
     @Volatile
     private var started = false
 
+    @Volatile
+    private var isSyncing = false
+
+    // Thread-safe cached date string — updated on Main, read from IO
+    @Volatile
+    private var cachedTodayDate: String = ""
+
     private val dayNames = mapOf(
         "Monday" to "SENIN",
         "Tuesday" to "SELASA",
@@ -64,8 +71,13 @@ class ApiClock @Inject constructor(
         if (started) return
         started = true
 
+        // TAMBAHKAN BARIS INI:
+        // Segera isi 'cachedTodayDate' dengan jam lokal STB sekarang juga,
+        // jangan biarkan nilainya "" (kosong) selama menunggu balasan API.
+        updateDisplay()
+
         scope.launch {
-            syncFromApi()
+            syncFromApi() // <--- Ini yang kadang bikin nyangkut beberapa detik
             updateDisplay()
 
             // Tick every second
@@ -88,6 +100,11 @@ class ApiClock @Inject constructor(
     }
 
     private suspend fun syncFromApi() {
+        if (isSyncing) {
+            Log.d(TAG, "Sync already in progress — skipping")
+            return
+        }
+        isSyncing = true
         try {
             val response = timeApiService.getCurrentTime()
             val timeResponse = if (response.isSuccessful) response.body() else null
@@ -105,6 +122,8 @@ class ApiClock @Inject constructor(
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to sync time from API", e)
+        } finally {
+            isSyncing = false
         }
     }
 
@@ -138,17 +157,38 @@ class ApiClock @Inject constructor(
 
         _currentDate.postValue(dateStr)
         _currentTime.postValue(timeStr)
+
+        // Cache today's date for thread-safe access from IO threads
+        cachedTodayDate = String.format(Locale.US, "%04d-%02d-%02d", year, month, day)
     }
 
     /**
      * Returns today's date as "yyyy-MM-dd" (e.g. "2026-03-07") based on the
-     * API-synced clock. Used to filter data that should only show today's entries.
+     * API-synced clock. Thread-safe — reads a volatile cached value set by updateDisplay().
      */
     fun getTodayDateString(): String {
-        val year = calendar.get(Calendar.YEAR)
-        val month = calendar.get(Calendar.MONTH) + 1
-        val day = calendar.get(Calendar.DAY_OF_MONTH)
-        return String.format(Locale.US, "%04d-%02d-%02d", year, month, day)
+        return cachedTodayDate
+    }
+
+    /**
+     * Returns the current API-synced time as "HH:mm" (e.g. "18:05").
+     * Thread-safe — reads from the volatile-backed calendar.
+     */
+    fun getCurrentTimeFormatted(): String {
+        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+        val minute = calendar.get(Calendar.MINUTE)
+        return String.format(Locale.US, "%02d:%02d", hour, minute)
+    }
+
+    /**
+     * Force an immediate time re-sync from the API.
+     * Called when internet comes back online to correct potentially drifted local clock.
+     */
+    fun forceResync() {
+        scope.launch {
+            Log.d(TAG, "Force re-sync triggered")
+            syncFromApi()
+        }
     }
 }
 

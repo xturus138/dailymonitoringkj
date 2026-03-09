@@ -48,14 +48,23 @@ class MonitoringRepository @Inject constructor(
         } catch (e: Exception) { emptyList() }
     }
 
+//    suspend fun getProgressDivisi(): List<ProgressDivisi> = withContext(Dispatchers.IO) {
+//        try {
+//            val response = apiService.getDivisionReports()
+//            if (response.isSuccessful) {
+//                val today = apiClock.getTodayDateString()
+//                (response.body() ?: emptyList()).filter {
+//                    it.reportDate?.take(10) == today
+//                }
+//            } else emptyList()
+//        } catch (e: Exception) { emptyList() }
+//    }
+
     suspend fun getProgressDivisi(): List<ProgressDivisi> = withContext(Dispatchers.IO) {
         try {
             val response = apiService.getDivisionReports()
             if (response.isSuccessful) {
-                val today = apiClock.getTodayDateString()
-                (response.body() ?: emptyList()).filter {
-                    it.reportDate?.take(10) == today
-                }
+                response.body() ?: emptyList() // Filter dihapus sementara
             } else emptyList()
         } catch (e: Exception) { emptyList() }
     }

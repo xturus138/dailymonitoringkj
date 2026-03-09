@@ -39,18 +39,21 @@ class SlideTiga : Fragment() {
 
     private fun setupChartAppearance() {
         val chart = binding.barChart
+
         chart.description.isEnabled = false
         chart.setDrawGridBackground(false)
         chart.setPinchZoom(false)
         chart.setScaleEnabled(false)
-        // Give enough room at top so value labels above bars don't collide with the legend
-        chart.setExtraOffsets(0f, 20f, 0f, 0f)
+
+        // UBAH BARIS INI: Tambahkan offset 30f di parameter terakhir (bottom)
+        chart.setExtraOffsets(0f, 30f, 0f, 30f)
 
         val xAxis = chart.xAxis
         xAxis.position = XAxis.XAxisPosition.BOTTOM
         xAxis.setDrawGridLines(false)
         xAxis.granularity = 1f
         xAxis.setCenterAxisLabels(true)
+        xAxis.textSize = 18f // <-- PERBESAR TEKS TAHUN (X-AXIS)
         xAxis.valueFormatter = object : ValueFormatter() {
             override fun getFormattedValue(value: Float): String = value.toInt().toString()
         }
@@ -58,20 +61,23 @@ class SlideTiga : Fragment() {
         val leftAxis = chart.axisLeft
         leftAxis.axisMinimum = 0f
         leftAxis.setDrawGridLines(true)
+        leftAxis.textSize = 18f // <-- PERBESAR ANGKA DI KIRI (Y-AXIS)
 
         chart.axisRight.isEnabled = false
 
         val legend = chart.legend
         legend.horizontalAlignment = Legend.LegendHorizontalAlignment.CENTER
         legend.verticalAlignment = Legend.LegendVerticalAlignment.TOP
-        legend.textSize = 12f
-        legend.formSize = 12f
-        // Ensure legend doesn't overlap the bars
+        legend.textSize = 20f // <-- PERBESAR TEKS LEGENDA (Tokutei Ginou / Gijinkoku)
+        legend.formSize = 20f // <-- PERBESAR KOTAK WARNA LEGENDA
         legend.yOffset = 10f
     }
 
     private fun observeData() {
         viewModel.chartData.observe(viewLifecycleOwner) { data ->
+            // Langsung set ukuran font statis, misalnya 24f
+            val valueTxtSize = 24f // <-- PERBESAR ANGKA DI ATAS BAR
+
             val entriesTokutei = ArrayList<BarEntry>()
             val entriesGijinkoku = ArrayList<BarEntry>()
 
@@ -82,12 +88,12 @@ class SlideTiga : Fragment() {
 
             val setTokutei = BarDataSet(entriesTokutei, "Tokutei Ginou")
             setTokutei.color = Color.parseColor("#E74C3C")
-            setTokutei.valueTextSize = 14f
+            setTokutei.valueTextSize = valueTxtSize // Ukuran diterapkan di sini
             setTokutei.valueTextColor = Color.BLACK
 
             val setGijinkoku = BarDataSet(entriesGijinkoku, "Gijinkoku")
             setGijinkoku.color = Color.parseColor("#144b78")
-            setGijinkoku.valueTextSize = 14f
+            setGijinkoku.valueTextSize = valueTxtSize // Ukuran diterapkan di sini
             setGijinkoku.valueTextColor = Color.BLACK
 
             val intFormatter = object : ValueFormatter() {
@@ -115,14 +121,6 @@ class SlideTiga : Fragment() {
 
             binding.barChart.invalidate()
             binding.barChart.animateY(1000)
-        }
-
-        viewModel.currentDate.observe(viewLifecycleOwner) { date ->
-            binding.currentDateTime.text = date
-        }
-
-        viewModel.currentTime.observe(viewLifecycleOwner) { time ->
-            binding.currentDayTime.text = time
         }
     }
 
