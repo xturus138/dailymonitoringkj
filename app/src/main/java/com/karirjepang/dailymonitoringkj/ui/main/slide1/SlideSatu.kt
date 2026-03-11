@@ -69,6 +69,7 @@ class SlideSatu : Fragment() {
     /** Calculate how many rows fit in each RecyclerView and tell the adapters.
      *  Row height = 56dp item + 6dp marginTop = 62dp total per row. */
     private fun updateVisibleCounts() {
+        if (_binding == null) return
         val rowHeightPx = resources.getDimensionPixelSize(R.dimen.signage_row_height)
         val marginPx = resources.getDimensionPixelSize(R.dimen.dimen_margin_6)
         val itemHeightPx = rowHeightPx + marginPx
@@ -93,7 +94,7 @@ class SlideSatu : Fragment() {
             Log.d(TAG, "kehadiranList observed: size=${data.size}, lifecycle=${viewLifecycleOwner.lifecycle.currentState}")
             kehadiranDataSize = data.size
             kehadiranAdapter.updateData(data)
-            binding.rvKehadiran.post { updateVisibleCounts() }
+            _binding?.rvKehadiran?.post { updateVisibleCounts() }
             rebuildScrollManager()
         }
 
@@ -101,7 +102,7 @@ class SlideSatu : Fragment() {
             Log.d(TAG, "meetingList observed: size=${data.size}")
             meetingDataSize = data.size
             meetingAdapter.updateData(data)
-            binding.rvMeeting.post { updateVisibleCounts() }
+            _binding?.rvMeeting?.post { updateVisibleCounts() }
             rebuildScrollManager()
         }
     }

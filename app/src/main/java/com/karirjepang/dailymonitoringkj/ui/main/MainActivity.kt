@@ -40,6 +40,8 @@ class MainActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         setContentView(R.layout.activity_main)
 
         // Keep screen on & prevent TV Doze mode
@@ -174,6 +176,10 @@ class MainActivity : FragmentActivity() {
                     0 -> SlideSatu()
                     else -> SlideDua()
                 }
+//                val fragment: Fragment = when (currentSlideIndex) {
+//                    0 -> SlideTiga()
+//                    else -> SlideEmpat()
+//                }
 
 
                 val anim = SlideAnimationConfig.current
@@ -209,6 +215,10 @@ class MainActivity : FragmentActivity() {
                         delay(3000)
                     }
                     is SlideDua -> {
+                        fragment.awaitScrollFinished()
+                        delay(3000)
+                    }
+                    is SlideEmpat -> {
                         fragment.awaitScrollFinished()
                         delay(3000)
                     }

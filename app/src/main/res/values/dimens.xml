@@ -39,7 +39,7 @@
     <dimen name="signage_row_height">76dp</dimen>
     <dimen name="signage_header_height">64dp</dimen>
     <dimen name="signage_logo_header_width">200dp</dimen>
-    <dimen name="signage_mitra_logo_size">120dp</dimen>
+    <dimen name="signage_mitra_logo_size">160dp</dimen>
     <dimen name="signage_chart_margin_top">24dp</dimen>
     <dimen name="signage_mitra_margin_top">24dp</dimen>
 

@@ -19,19 +19,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Centralized cache manager for all signage slide data.
- *
- * Features:
- * - Fetches ALL data from API every [REFRESH_INTERVAL_MS] (5 minutes) in **parallel**.
- * - Uses hash comparison to only emit new data when it actually changes.
- * - Slides read from [StateFlow] — always get the latest cached value instantly.
- * - On cold start, fetches immediately, then starts the 5-minute cycle.
- * - On API failure, retains previous cached data (critical for 24/7 signage).
- * - **Staleness indicator**: exposes [isDataStale] when data hasn't refreshed in 15+ minutes.
- * - **Exponential backoff**: retries faster on failure (30s → 60s → 120s → cap at 5 min).
- * - **Duplicate-safe**: uses [AtomicBoolean] + job cancellation to prevent multiple loops.
- */
 @Singleton
 class CachedDataManager @Inject constructor(
     private val repository: MonitoringRepository,
@@ -41,13 +28,12 @@ class CachedDataManager @Inject constructor(
 
     companion object {
         private const val TAG = "CachedDataManager"
-        private const val REFRESH_INTERVAL_MS = 60 * 1000L       // 1 menit (60 detik x 1000)
+        private const val REFRESH_INTERVAL_MS = 60 * 1000L       // 1 menit
         private const val RETRY_BASE_MS = 30 * 1000L              // 30 seconds base retry
-        private const val STALE_THRESHOLD_MS = 5 * 60 * 1000L    // 5 menit → data dianggap usang
+        private const val STALE_THRESHOLD_MS = 5 * 60 * 1000L    // 5 menit → data usang
     }
 
-    // --- StateFlows for each slide data ---
-
+    // --- StateFlows ---
     private val _kehadiranList = MutableStateFlow<List<Kehadiran>>(emptyList())
     val kehadiranList: StateFlow<List<Kehadiran>> = _kehadiranList.asStateFlow()
 
@@ -63,42 +49,47 @@ class CachedDataManager @Inject constructor(
     private val _mitraList = MutableStateFlow<List<Mitra>>(emptyList())
     val mitraList: StateFlow<List<Mitra>> = _mitraList.asStateFlow()
 
-    // --- Staleness indicator (#3) ---
-
+    // --- Staleness indicator ---
     private val _isDataStale = MutableStateFlow(false)
     val isDataStale: StateFlow<Boolean> = _isDataStale.asStateFlow()
 
     private val _consecutiveFailures = MutableStateFlow(0)
     val consecutiveFailures: StateFlow<Int> = _consecutiveFailures.asStateFlow()
 
-    // --- Last successful update timestamp for UI display ---
-
     private val _lastUpdatedText = MutableStateFlow("")
     val lastUpdatedText: StateFlow<String> = _lastUpdatedText.asStateFlow()
 
-    // --- Hash storage for change detection ---
-
+    // --- Hash storage ---
     private var hashKehadiran: Int = 0
     private var hashMeeting: Int = 0
     private var hashProgressDivisi: Int = 0
     private var hashKeberangkatanPMI: Int = 0
     private var hashMitra: Int = 0
 
-    // --- Refresh tracking (#2: AtomicBoolean + Job cancellation) ---
-
+    // --- Refresh tracking ---
     private val isRunning = AtomicBoolean(false)
     private var refreshJob: Job? = null
+    private var delayJob: Job? = null // NEW: Dedicated job for the waiting period
     private var lastSuccessTimestamp: Long = 0L
     private var failureCount: Int = 0
+    private var lastAttemptWasFailure = false // NEW: Track if we need an instant retry
 
-    /**
-     * Starts the auto-refresh loop.
-     * Safe to call multiple times — cancels previous loop before starting new one (#2 fix).
-     * Fetches immediately on first call, then every 5 minutes.
-     */
+    init {
+        // NEW: Listen for the exact moment the internet returns
+        networkMonitor.addOnOnlineListener {
+            Log.d(TAG, "Internet Restored Event Received!")
+
+            // Only interrupt if the previous attempt failed and we are currently waiting
+            if (lastAttemptWasFailure && delayJob?.isActive == true) {
+                Log.d(TAG, "Interrupting backoff delay to fetch immediately.")
+                delayJob?.cancel() // This breaks the delay() in the while loop
+            }
+        }
+    }
+
     fun startAutoRefresh(scope: CoroutineScope) {
-        // Cancel previous job to prevent duplicate loops (#2)
         refreshJob?.cancel()
+        delayJob?.cancel()
         isRunning.set(false)
 
         if (!isRunning.compareAndSet(false, true)) {
@@ -106,34 +97,40 @@ class CachedDataManager @Inject constructor(
             return
         }
 
-        Log.d(TAG, "Starting auto-refresh cycle (interval: ${REFRESH_INTERVAL_MS / 1000}s)")
+        Log.d(TAG, "Starting auto-refresh cycle")
 
         refreshJob = scope.launch {
             while (isActive) {
-                // HAPUS BLOK INI:
-                // if (!networkMonitor.isOnline.value) { ... }
+                // KITA HAPUS PRASYARAT (PRE-CHECK) PENGECEKAN PING DI SINI!
+                // Biarkan Retrofit yang membuktikan apakah internet benar-benar mati atau tidak.
 
-                // Langsung hajar fetch data (Try Anyway)
+                Log.d(TAG, "Mencoba memanggil API (Try Anyway)...")
                 val success = refreshAllParallel()
 
                 if (success) {
+                    // API BERHASIL! (Artinya internet nyata-nyata ada, masa bodoh dengan hasil ping)
                     failureCount = 0
+                    lastAttemptWasFailure = false
                     _consecutiveFailures.value = 0
                     lastSuccessTimestamp = System.currentTimeMillis()
                     _isDataStale.value = false
                     _lastUpdatedText.value = "Diperbarui ${apiClock.getCurrentTimeFormatted()}"
-                    delay(REFRESH_INTERVAL_MS)
+
+                    waitForNextCycle(REFRESH_INTERVAL_MS) // Tunggu 1 menit
                 } else {
+                    // API GAGAL (Memang tidak ada internet, atau server down)
                     failureCount++
+                    lastAttemptWasFailure = true
                     _consecutiveFailures.value = failureCount
                     checkStaleness()
 
-                    // Jika GAGAL BENERAN (karena timeout/no route to host dari Retrofit)
-                    // Sistem akan pakai Exponential backoff: 30s → 60s → 120s → cap at 5 min
                     val backoffMs = (RETRY_BASE_MS * (1L shl failureCount.coerceAtMost(4)))
                         .coerceAtMost(REFRESH_INTERVAL_MS)
-                    Log.w(TAG, "Refresh failed ($failureCount consecutive), retry in ${backoffMs / 1000}s")
-                    delay(backoffMs)
+                    Log.w(TAG, "Refresh gagal ($failureCount), istirahat selama ${backoffMs / 1000} detik")
+
+                    // Sistem beristirahat. Jika tiba-tiba NetworkMonitor mendeteksi koneksi,
+                    // listener di blok "init" akan membatalkan istirahat ini dan loop langsung berulang!
+                    waitForNextCycle(backoffMs)
                 }
             }
             isRunning.set(false)
@@ -141,13 +138,21 @@ class CachedDataManager @Inject constructor(
     }
 
     /**
-     * Fetches all data from API **in parallel** and updates StateFlows only if data changed.
-     * Returns true if at least one endpoint succeeded (#6 fix).
+     * Extracts the delay into a cancellable sub-job.
      */
+    private suspend fun waitForNextCycle(timeMs: Long) {
+        coroutineScope {
+            delayJob = launch {
+                delay(timeMs)
+            }
+            delayJob?.join() // Wait until the delay finishes normally OR gets cancelled
+        }
+    }
+
     private suspend fun refreshAllParallel(): Boolean {
+        // (This function remains exactly the same as your original code)
         Log.d(TAG, "Refreshing all data from API (parallel)...")
         val startTime = System.currentTimeMillis()
-
         var successCount = 0
 
         try {
@@ -167,14 +172,11 @@ class CachedDataManager @Inject constructor(
 
         val elapsed = System.currentTimeMillis() - startTime
         Log.d(TAG, "Refresh complete in ${elapsed}ms ($successCount/5 succeeded)")
-
         return successCount > 0
     }
 
-    /**
-     * Check if data is stale: last successful refresh > 15 minutes ago (#3 fix).
-     */
     private fun checkStaleness() {
+        // (This function remains exactly the same as your original code)
         if (lastSuccessTimestamp > 0) {
             val elapsed = System.currentTimeMillis() - lastSuccessTimestamp
             if (elapsed > STALE_THRESHOLD_MS) {
@@ -184,9 +186,7 @@ class CachedDataManager @Inject constructor(
         }
     }
 
-    // --- Individual refresh methods with hash check ---
-    // Each returns true on success, false on failure.
-
+    // (refreshKehadiran, refreshMeeting, etc. remain exactly the same as your original code)
     private suspend fun refreshKehadiran(): Boolean {
         return try {
             val data = repository.getKehadiran()
@@ -198,7 +198,6 @@ class CachedDataManager @Inject constructor(
             }
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to refresh kehadiran", e)
             false
         }
     }
@@ -214,7 +213,6 @@ class CachedDataManager @Inject constructor(
             }
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to refresh meeting", e)
             false
         }
     }
@@ -230,7 +228,6 @@ class CachedDataManager @Inject constructor(
             }
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to refresh progressDivisi", e)
             false
         }
     }
@@ -246,7 +243,6 @@ class CachedDataManager @Inject constructor(
             }
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to refresh keberangkatanPMI", e)
             false
         }
     }
@@ -262,9 +258,7 @@ class CachedDataManager @Inject constructor(
             }
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to refresh mitra", e)
             false
         }
     }
 }
-

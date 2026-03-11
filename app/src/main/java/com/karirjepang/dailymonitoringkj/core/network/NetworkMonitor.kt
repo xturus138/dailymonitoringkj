@@ -147,11 +147,13 @@ class NetworkMonitor @Inject constructor(
 
     private fun verifyAndUpdate() {
         scope?.launch {
-            val reachable = pingTest()
+            val reachable = pingTestDoubleCheck() // Ubah pemanggilan ke fungsi baru
             Log.d(TAG, "Ping result: $reachable")
             updateOnlineState(reachable)
         }
     }
+
+
 
     private suspend fun updateOnlineState(online: Boolean) {
         stateMutex.withLock {
@@ -174,6 +176,37 @@ class NetworkMonitor @Inject constructor(
         return try {
             val socket = Socket()
             socket.connect(InetSocketAddress("dailymonitoringkj.id", 443), PING_TIMEOUT_MS)
+            socket.close()
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun pingTestDoubleCheck(): Boolean {
+        // Percobaan 1: Ping ke server utama aplikasi Anda
+        val isServerReachable = checkSocket("dailymonitoringkj.id", 443)
+        if (isServerReachable) return true
+
+        Log.w(TAG, "Ping ke server utama gagal. Memeriksa False Alarm...")
+
+        // Percobaan 2: Jika server gagal, cek apakah internetnya yang mati, atau servernya yang down.
+        // Kita ping ke Google DNS (8.8.8.8 port 53).
+        val isInternetAlive = checkSocket("8.8.8.8", 53)
+
+        if (isInternetAlive) {
+            Log.d(TAG, "False Alarm terdeteksi! Internet hidup, tapi server utama sedang tidak merespons.")
+            return true // Tetap anggap ONLINE agar tidak muncul peringatan "No Internet"
+        }
+
+        Log.e(TAG, "Internet benar-benar terputus.")
+        return false // Keduanya gagal, fix internet mati
+    }
+
+    private fun checkSocket(hostname: String, port: Int): Boolean {
+        return try {
+            val socket = java.net.Socket()
+            socket.connect(java.net.InetSocketAddress(hostname, port), PING_TIMEOUT_MS)
             socket.close()
             true
         } catch (_: Exception) {

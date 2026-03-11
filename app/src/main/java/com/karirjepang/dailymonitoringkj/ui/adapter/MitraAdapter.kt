@@ -1,125 +1,125 @@
 package com.karirjepang.dailymonitoringkj.ui.adapter
 
 import android.annotation.SuppressLint
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.karirjepang.dailymonitoringkj.core.model.Mitra
 import com.karirjepang.dailymonitoringkj.databinding.ItemMitraBinding
+import kotlin.math.min
 
-/**
- * Adapter that reorders Mitra items center-out per row with zig-zag direction.
- *
- * Row 0 (even): center → left  → right → left  → right …
- * Row 1 (odd):  center → right → left  → right → left  …
- *
- * Centering of partial rows is handled externally by ItemDecoration.
- */
 class MitraAdapter(
     private var listMitra: List<Mitra> = emptyList(),
-    private val spanCount: Int = 6
+    private val spanCount: Int = 5
 ) : RecyclerView.Adapter<MitraAdapter.ViewHolder>() {
 
-    class ViewHolder(val binding: ItemMitraBinding) : RecyclerView.ViewHolder(binding.root)
+    private var rows: List<List<Mitra>> = emptyList()
+
+    class ViewHolder(val rowContainer: LinearLayout) : RecyclerView.ViewHolder(rowContainer)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = ItemMitraBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        return ViewHolder(binding)
+        val rowContainer = LinearLayout(parent.context).apply {
+            layoutParams = RecyclerView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            gravity = Gravity.CENTER_VERTICAL
+            orientation = LinearLayout.HORIZONTAL
+            clipToPadding = false
+            clipChildren = false
+        }
+        return ViewHolder(rowContainer)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val item = listMitra[position]
+        val rowItems = rows[position]
+        val context = holder.rowContainer.context
 
-        holder.binding.tvNamaMitra.text = item.nama
+        holder.rowContainer.removeAllViews()
 
-        holder.binding.ivLogoMitra.visibility = View.INVISIBLE
+        // Baris ke-1, 3, 5 (Ganjil secara urutan visual)
+        val isOddRow = (position % 2 == 0)
+        val maxItemsInThisRow = if (isOddRow) spanCount else (spanCount - 1)
 
-        holder.binding.ivLogoMitra.load(item.logoUrl) {
-            crossfade(true)
-            listener(
-                onSuccess = { _, _ ->
-                    holder.binding.ivLogoMitra.visibility = View.VISIBLE
-                },
-                onError = { _, _ ->
-                    holder.binding.ivLogoMitra.visibility = View.VISIBLE
-                }
-            )
+        // 1. PENGATURAN RASIO (WEIGHT)
+        // Logika ini menghilangkan masalah "terlalu kanan", karena ruang dibagi berdasarkan rasio layar asli.
+        val itemWeight = 2f
+        val edgeSpacerWeight = 1.0f // Anda bisa ubah ke 1.5f atau 2.0f jika grid ingin lebih merapat ke tengah
+
+        // Total ruang (Rasio) selalu tetap agar grid atas dan bawah sejajar sempurna
+        val totalWeightSum = (edgeSpacerWeight * 2) + (spanCount * itemWeight)
+        holder.rowContainer.weightSum = totalWeightSum
+
+        // 2. SPACER KIRI (Pendorong)
+        // Jika baris genap, spacer kiri otomatis membesar setengah ukuran item agar tercipta Zigzag.
+        val leftWeight = if (isOddRow) edgeSpacerWeight else (edgeSpacerWeight + (itemWeight / 2f))
+        holder.rowContainer.addView(View(context).apply {
+            layoutParams = LinearLayout.LayoutParams(0, 1, leftWeight)
+        })
+
+        // 3. ISI ITEM (SISTEM SLOT)
+        // Membuat "slot" imajiner agar data tetap lurus meski jumlahnya sedikit (misal: hanya 2 item).
+        val slotItems = arrayOfNulls<Mitra>(maxItemsInThisRow)
+        val startIndex = (maxItemsInThisRow - rowItems.size) / 2
+        for (i in rowItems.indices) {
+            slotItems[startIndex + i] = rowItems[i]
         }
+
+        for (item in slotItems) {
+            if (item != null) {
+                val itemBinding = ItemMitraBinding.inflate(LayoutInflater.from(context), holder.rowContainer, false)
+
+                // Kunci lebar menggunakan weight (0dp), bukan piksel mutlak.
+                itemBinding.root.layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, itemWeight)
+
+                itemBinding.tvNamaMitra.text = item.nama
+                itemBinding.ivLogoMitra.visibility = View.INVISIBLE
+
+                itemBinding.ivLogoMitra.load(item.logoUrl) {
+                    crossfade(true)
+                    listener(
+                        onSuccess = { _, _ -> itemBinding.ivLogoMitra.visibility = View.VISIBLE },
+                        onError = { _, _ -> itemBinding.ivLogoMitra.visibility = View.VISIBLE }
+                    )
+                }
+                holder.rowContainer.addView(itemBinding.root)
+            } else {
+                // Slot Kosong (Menjaga grid tetap lurus jika item kurang dari kapasitas maksimal)
+                holder.rowContainer.addView(View(context).apply {
+                    layoutParams = LinearLayout.LayoutParams(0, 1, itemWeight)
+                })
+            }
+        }
+
+        // 4. SPACER KANAN (Penyeimbang)
+        val rightWeight = if (isOddRow) edgeSpacerWeight else (edgeSpacerWeight + (itemWeight / 2f))
+        holder.rowContainer.addView(View(context).apply {
+            layoutParams = LinearLayout.LayoutParams(0, 1, rightWeight)
+        })
     }
 
-    override fun getItemCount(): Int = listMitra.size
+    override fun getItemCount(): Int = rows.size
 
     @SuppressLint("NotifyDataSetChanged")
     fun updateData(newData: List<Mitra>) {
-        listMitra = reorderCenterOut(newData)
+        listMitra = newData
+        val newRows = mutableListOf<List<Mitra>>()
+        var i = 0
+        var isOddRow = true
+
+        while (i < newData.size) {
+            val chunkSize = if (isOddRow) spanCount else (spanCount - 1)
+            val end = min(i + chunkSize, newData.size)
+            newRows.add(newData.subList(i, end))
+            i += chunkSize
+            isOddRow = !isOddRow
+        }
+
+        rows = newRows
         notifyDataSetChanged()
     }
-
-    /**
-     * Reorder data so within each row, items are placed center-out.
-     * Even rows zig left-first, odd rows zig right-first.
-     */
-    private fun reorderCenterOut(data: List<Mitra>): List<Mitra> {
-        if (data.isEmpty()) return data
-
-        val result = mutableListOf<Mitra>()
-        val totalRows = (data.size + spanCount - 1) / spanCount
-
-        for (row in 0 until totalRows) {
-            val startIdx = row * spanCount
-            val endIdx = minOf(startIdx + spanCount, data.size)
-            val rowItems = data.subList(startIdx, endIdx)
-            val cols = rowItems.size
-
-            // Get center-out column order for this row's item count
-            val placementOrder = buildCenterOutOrder(cols, leftFirst = row % 2 == 0)
-
-            // placementOrder[i] = grid column for the i-th original item
-            // We need: for each grid column 0..cols-1, which item index goes there
-            val reordered = arrayOfNulls<Mitra>(cols)
-            for ((itemIdx, gridCol) in placementOrder.withIndex()) {
-                reordered[gridCol] = rowItems[itemIdx]
-            }
-
-            reordered.filterNotNull().forEach { result.add(it) }
-        }
-
-        return result
-    }
-
-    /**
-     * For [count] items in a row, return column assignments center-out.
-     * Index = item order (0=first), value = grid column.
-     */
-    private fun buildCenterOutOrder(count: Int, leftFirst: Boolean): List<Int> {
-        if (count == 0) return emptyList()
-
-        val order = mutableListOf<Int>()
-        val midLeft = (count - 1) / 2
-        order.add(midLeft)
-
-        if (count % 2 == 0) {
-            order.add(midLeft + 1)
-        }
-
-        var left = midLeft - 1
-        var right = if (count % 2 == 0) midLeft + 2 else midLeft + 1
-        var goLeft = leftFirst
-
-        while (left >= 0 || right < count) {
-            if (goLeft) {
-                if (left >= 0) order.add(left--)
-                if (right < count) order.add(right++)
-            } else {
-                if (right < count) order.add(right++)
-                if (left >= 0) order.add(left--)
-            }
-            goLeft = !goLeft
-        }
-
-        return order
-    }
 }
-

@@ -34,6 +34,7 @@
         android:layout_height="wrap_content"
         style="@style/font24.bold"
         android:text=""
+        android:textColor="@color/dark_blue"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 

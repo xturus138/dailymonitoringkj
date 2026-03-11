@@ -14,7 +14,6 @@ class MonitoringRepository @Inject constructor(
     private val apiClock: ApiClock
 ) {
 
-
     suspend fun login(request: LoginRequest): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
             val response = apiService.login(request)
@@ -30,78 +29,68 @@ class MonitoringRepository @Inject constructor(
     }
 
     suspend fun getKehadiran(): List<Kehadiran> = withContext(Dispatchers.IO) {
-        try {
-            val response = apiService.getAttendances()
-            if (response.isSuccessful) {
-                val today = apiClock.getTodayDateString()
-                (response.body() ?: emptyList()).filter {
-                    it.date?.take(10) == today
-                }
-            } else emptyList()
-        } catch (e: Exception) { emptyList() }
+        val response = apiService.getAttendances()
+        if (response.isSuccessful) {
+            val today = apiClock.getTodayDateString()
+            (response.body() ?: emptyList()).filter {
+                it.date?.take(10) == today
+            }
+        } else {
+            throw Exception("Gagal mengambil data kehadiran") // Lempar error jika gagal
+        }
     }
 
     suspend fun getMeeting(): List<Meeting> = withContext(Dispatchers.IO) {
-        try {
-            val response = apiService.getMeetings()
-            if (response.isSuccessful) response.body() ?: emptyList() else emptyList()
-        } catch (e: Exception) { emptyList() }
+        val response = apiService.getMeetings()
+        if (response.isSuccessful) {
+            response.body() ?: emptyList()
+        } else {
+            throw Exception("Gagal mengambil data meeting") // Lempar error jika gagal
+        }
     }
 
-//    suspend fun getProgressDivisi(): List<ProgressDivisi> = withContext(Dispatchers.IO) {
-//        try {
-//            val response = apiService.getDivisionReports()
-//            if (response.isSuccessful) {
-//                val today = apiClock.getTodayDateString()
-//                (response.body() ?: emptyList()).filter {
-//                    it.reportDate?.take(10) == today
-//                }
-//            } else emptyList()
-//        } catch (e: Exception) { emptyList() }
-//    }
-
     suspend fun getProgressDivisi(): List<ProgressDivisi> = withContext(Dispatchers.IO) {
-        try {
-            val response = apiService.getDivisionReports()
-            if (response.isSuccessful) {
-                response.body() ?: emptyList() // Filter dihapus sementara
-            } else emptyList()
-        } catch (e: Exception) { emptyList() }
+        val response = apiService.getDivisionReports()
+        if (response.isSuccessful) {
+            response.body() ?: emptyList()
+        } else {
+            throw Exception("Gagal mengambil data progress divisi") // Lempar error jika gagal
+        }
     }
 
     suspend fun getKeberangkatanPMI(): List<KeberangkatanPMI> = withContext(Dispatchers.IO) {
-        try {
-            val response = apiService.getPmiDepartures()
-            if (response.isSuccessful) {
-                val rawData = response.body() ?: emptyList()
+        val response = apiService.getPmiDepartures()
+        if (response.isSuccessful) {
+            val rawData = response.body() ?: emptyList()
 
-                val groupedByYear = rawData.groupBy { it.date?.take(4) ?: "0" }
+            val groupedByYear = rawData.groupBy { it.date?.take(4) ?: "0" }
 
-                groupedByYear.map { (yearStr, items) ->
-                    val year = yearStr.toFloatOrNull() ?: 0f
-                    var tokutei = 0f
-                    var gijinkoku = 0f
+            groupedByYear.map { (yearStr, items) ->
+                val year = yearStr.toFloatOrNull() ?: 0f
+                var tokutei = 0f
+                var gijinkoku = 0f
 
-                    items.forEach { item ->
-                        val total = item.total?.toFloatOrNull() ?: 0f
-                        if (item.visa?.name?.contains("Tokutei", ignoreCase = true) == true) {
-                            tokutei += total
-                        } else if (item.visa?.name?.contains("Gijinkoku", ignoreCase = true) == true) {
-                            gijinkoku += total
-                        }
+                items.forEach { item ->
+                    val total = item.total?.toFloatOrNull() ?: 0f
+                    if (item.visa?.name?.contains("Tokutei", ignoreCase = true) == true) {
+                        tokutei += total
+                    } else if (item.visa?.name?.contains("Gijinkoku", ignoreCase = true) == true) {
+                        gijinkoku += total
                     }
-                    KeberangkatanPMI(year, tokutei, gijinkoku)
-                }.filter { it.tahun > 0f }.sortedBy { it.tahun }.takeLast(4)
-            } else {
-                emptyList()
-            }
-        } catch (e: Exception) { emptyList() }
+                }
+                KeberangkatanPMI(year, tokutei, gijinkoku)
+            }.filter { it.tahun > 0f }.sortedBy { it.tahun }.takeLast(4)
+        } else {
+            throw Exception("Gagal mengambil data keberangkatan PMI") // Lempar error jika gagal
+        }
     }
 
     suspend fun getDaftarMitra(): List<Mitra> = withContext(Dispatchers.IO) {
-        try {
-            val response = apiService.getPartners()
-            if (response.isSuccessful) response.body() ?: emptyList() else emptyList()
-        } catch (e: Exception) { emptyList() }
+        val response = apiService.getPartners()
+        if (response.isSuccessful) {
+            response.body() ?: emptyList()
+        } else {
+            throw Exception("Gagal mengambil data mitra") // Lempar error jika gagal
+        }
     }
 }

@@ -15,10 +15,11 @@
 
     <TextView
         android:id="@+id/tvNamaMitra"
-        style="@style/font20.bold" android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        style="@style/font20.bold"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/dimen_margin_8"
         android:text="Nama Mitra"
         android:textColor="@color/dark_blue"
-        android:textAlignment="center" />
+        android:textAlignment="center"
+        android:maxLines="2" android:ellipsize="end" />
 </LinearLayout>

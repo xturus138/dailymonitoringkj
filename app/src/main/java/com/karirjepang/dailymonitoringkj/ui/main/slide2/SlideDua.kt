@@ -60,6 +60,7 @@ class SlideDua : Fragment() {
     /** Calculate how many rows fit in the RecyclerView.
      *  Row height = 56dp item + 6dp marginTop = 62dp total per row. */
     private fun updateVisibleCount() {
+        if (_binding == null) return
         val rowHeightPx = resources.getDimensionPixelSize(R.dimen.signage_row_height)
         val marginPx = resources.getDimensionPixelSize(R.dimen.dimen_margin_6)
         val itemHeightPx = rowHeightPx + marginPx
@@ -77,7 +78,7 @@ class SlideDua : Fragment() {
             Log.d(TAG, "progressList observed: size=${data.size}")
             progressAdapter.updateData(data)
             dataRowCount = progressAdapter.getDataRowCount()
-            binding.rvProgress.post { updateVisibleCount() }
+            _binding?.rvProgress?.post { updateVisibleCount() }
             rebuildScrollManager()
         }
     }

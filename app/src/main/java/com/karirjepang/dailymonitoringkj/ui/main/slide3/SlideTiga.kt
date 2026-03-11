@@ -75,6 +75,11 @@ class SlideTiga : Fragment() {
 
     private fun observeData() {
         viewModel.chartData.observe(viewLifecycleOwner) { data ->
+
+            if (data.isEmpty()) {
+                binding.barChart.clear() // Kosongkan layar grafik
+                return@observe           // Berhenti di sini, jangan lanjut ke bawah
+            }
             // Langsung set ukuran font statis, misalnya 24f
             val valueTxtSize = 24f // <-- PERBESAR ANGKA DI ATAS BAR
 
