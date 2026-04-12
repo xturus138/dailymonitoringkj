@@ -31,10 +31,12 @@ class MeetingAdapter(private var listMeeting: List<Meeting>) :
             val item = listMeeting[position]
             holder.binding.tvWaktu.text = item.waktu
             holder.binding.tvJudulMeeting.text = item.judul
+            holder.binding.tvJudulMeeting.isSelected = true
             holder.binding.tvSeparator.visibility = android.view.View.VISIBLE
         } else {
             holder.binding.tvWaktu.text = ""
             holder.binding.tvJudulMeeting.text = ""
+            holder.binding.tvJudulMeeting.isSelected = false
             holder.binding.tvSeparator.visibility = android.view.View.INVISIBLE
         }
     }

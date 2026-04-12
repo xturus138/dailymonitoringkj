@@ -46,10 +46,14 @@ class ProgressAdapter(private var listProgress: List<ProgressDivisi>) :
             holder.binding.tvNamaDivisi.text = item.namaDivisi
             holder.binding.tvProject.text = item.projectProgress
             holder.binding.tvPersentase.text = item.persentase.toString()
+            holder.binding.tvNamaDivisi.isSelected = true
+            holder.binding.tvProject.isSelected = true
         } else {
             holder.binding.tvNamaDivisi.text = ""
             holder.binding.tvProject.text = ""
             holder.binding.tvPersentase.text = ""
+            holder.binding.tvNamaDivisi.isSelected = false
+            holder.binding.tvProject.isSelected = false
         }
     }
 

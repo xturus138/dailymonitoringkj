@@ -25,8 +25,9 @@
             style="@style/font14.bold"
             android:textAlignment="center"
             android:gravity="center"
-            android:maxLines="2"
-            android:ellipsize="end"
+            android:singleLine="true"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="marquee_forever"
             android:layout_weight="1"/>
 
         <TextView
@@ -43,8 +44,9 @@
             android:layout_height="match_parent"
             android:textAlignment="center"
             android:gravity="center"
-            android:maxLines="2"
-            android:ellipsize="end"
+            android:singleLine="true"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="marquee_forever"
             style="@style/font14.bold"
             android:layout_weight="1.5"/>
 
@@ -87,8 +89,9 @@
             style="@style/font14.bold"
             android:textAlignment="center"
             android:gravity="center"
-            android:maxLines="2"
-            android:ellipsize="end"
+            android:singleLine="true"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="marquee_forever"
             android:layout_weight="1"/>
 
         <TextView
@@ -105,8 +108,9 @@
             android:layout_height="match_parent"
             android:textAlignment="center"
             android:gravity="center"
-            android:maxLines="2"
-            android:ellipsize="end"
+            android:singleLine="true"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="marquee_forever"
             style="@style/font14.bold"
             android:layout_weight="1.5"/>
 
