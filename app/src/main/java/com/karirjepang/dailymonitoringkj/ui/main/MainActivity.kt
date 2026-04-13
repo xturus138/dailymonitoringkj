@@ -169,8 +169,8 @@ class MainActivity : FragmentActivity() {
             while (isActive) {
                 // testing
                 val fragment: Fragment = when (currentSlideIndex) {
-                    0 -> SlideLima()
-                    else -> SlideLima()
+                    0 -> SlideDua()
+                    else -> SlideDua()
                 }
                 //layar 1
 //                val fragment: Fragment = when (currentSlideIndex) {

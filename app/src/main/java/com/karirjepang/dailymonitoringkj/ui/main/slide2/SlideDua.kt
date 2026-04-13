@@ -143,8 +143,8 @@ class SlideDua : Fragment() {
         // Use real rendered widths but measuring actual text for the UPCOMING page.
         val measuredDelay = estimateMarqueeWaitFromData(pageData)
         if (measuredDelay != -1L) {
-            // Buffer: 2000ms adapter delay + ~1200ms Android native start delay + 500ms safe margin
-            return (measuredDelay + 3_700L).coerceIn(6_000L, 60_000L)
+            // Buffer: 2000ms adapter delay + ~2000ms Android native start delay + 1000ms safe margin
+            return (measuredDelay + 5_000L).coerceIn(6_000L, 120_000L)
         }
 
         // Fallback before first layout/frame.
@@ -212,9 +212,10 @@ class SlideDua : Fragment() {
 
         val density = textView.context.resources.displayMetrics.density
         // Android native marquee speed is exactly 30 * screen density
-        val speedPxPerSecond = 30f * density
-        // We only wait until the text scrolled enough to be fully read once, not fully disappeared.
-        val distancePx = textWidth - availableWidth + 80f
+        // Android native marquee speed is often slower than 30dp/s for long texts
+        val speedPxPerSecond = 25f * density
+        // Increase padding to ensure user can read the end of the text
+        val distancePx = textWidth - availableWidth + 120f
         return ((distancePx / speedPxPerSecond) * 1000f).toLong().coerceAtLeast(0L)
     }
 
