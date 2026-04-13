@@ -238,13 +238,17 @@ class SlideSatu : Fragment() {
         val tvNamaK: TextView
         val tvKetK: TextView
         var availableNama = 0
+        var availableStatus = 0
         var availableKet = 0
 
         if (binding.rvKehadiran.childCount > 0) {
             val sampleChildK = binding.rvKehadiran.getChildAt(0)
             tvNamaK = sampleChildK.findViewById(R.id.tvNamaStaff) ?: return -1L
+            val tvStatusK: TextView = sampleChildK.findViewById(R.id.tvStatus) ?: return -1L
             tvKetK = sampleChildK.findViewById(R.id.tvKeterangan) ?: return -1L
+            
             availableNama = (tvNamaK.width - tvNamaK.paddingLeft - tvNamaK.paddingRight).coerceAtLeast(0)
+            availableStatus = (tvStatusK.width - tvStatusK.paddingLeft - tvStatusK.paddingRight).coerceAtLeast(0)
             availableKet = (tvKetK.width - tvKetK.paddingLeft - tvKetK.paddingRight).coerceAtLeast(0)
         } else {
             val headerK = binding.linearLayoutHeaderKehadiran
@@ -253,15 +257,20 @@ class SlideSatu : Fragment() {
             val rvWidth = binding.rvKehadiran.width
             if (rvWidth > 0) {
                 val marginPx = 40f * tvNamaK.context.resources.displayMetrics.density
-                availableNama = ((rvWidth - marginPx) * (1.0f / 3.5f)).toInt().coerceAtLeast(0)
-                availableKet = ((rvWidth - marginPx) * (1.0f / 3.5f)).toInt().coerceAtLeast(0)
+                availableNama = ((rvWidth - marginPx) * (1.35f / 3.5f)).toInt().coerceAtLeast(0)
+                availableStatus = ((rvWidth - marginPx) * (0.8f / 3.5f)).toInt().coerceAtLeast(0)
+                availableKet = ((rvWidth - marginPx) * (1.35f / 3.5f)).toInt().coerceAtLeast(0)
             }
         }
 
-        if (availableNama > 0 && availableKet > 0) {
+        if (availableNama > 0 && availableStatus > 0 && availableKet > 0) {
+            kehadiranAdapter.setAvailableWidths(availableNama, availableStatus, availableKet)
             kehadiranData.forEach { item ->
                 val namaDur = estimateSingleDuration(item.nama, tvNamaK, availableNama)
                 if (namaDur > maxDurationMs) maxDurationMs = namaDur
+
+                val statusDur = estimateSingleDuration(item.status, tvNamaK, availableStatus) // Use Nama textview for paint properties
+                if (statusDur > maxDurationMs) maxDurationMs = statusDur
 
                 val ketDur = estimateSingleDuration(item.keterangan ?: "", tvKetK, availableKet)
                 if (ketDur > maxDurationMs) maxDurationMs = ketDur
@@ -286,6 +295,7 @@ class SlideSatu : Fragment() {
         }
 
         if (availableJudul > 0) {
+            meetingAdapter.setAvailableWidth(availableJudul)
             meetingData.forEach { item ->
                 val judulDur = estimateSingleDuration(item.judul ?: "", tvJudulM, availableJudul)
                 if (judulDur > maxDurationMs) maxDurationMs = judulDur
@@ -303,12 +313,18 @@ class SlideSatu : Fragment() {
     private fun estimateSingleDuration(content: String, textView: TextView, availableWidth: Int): Long {
         if (content.isBlank() || availableWidth <= 0) return 0L
 
-        val textWidth = textView.paint.measureText(content)
+        // NEW LOGIC: If it fits in 2 lines, it won't scroll.
+        val fitsIn2 = com.karirjepang.dailymonitoringkj.ui.util.MarqueeUtils.fitsInLines(content, textView, availableWidth, 2)
+        if (fitsIn2) return 0L
+
+        val textWidth = textView.paint.measureText(content.replace("\n", " • ").replace("  ", " ").trim())
         if (textWidth <= availableWidth) return 0L
 
         val density = textView.context.resources.displayMetrics.density
-        val speedPxPerSecond = 30f * density
-        val distancePx = textWidth - availableWidth + 80f
+        // Android native marquee speed is often slower than 30dp/s for long texts
+        val speedPxPerSecond = 25f * density
+        // Increase padding to ensure user can read the end of the text
+        val distancePx = textWidth - availableWidth + 120f
         return ((distancePx / speedPxPerSecond) * 1000f).toLong().coerceAtLeast(0L)
     }
 

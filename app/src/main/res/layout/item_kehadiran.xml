@@ -19,7 +19,7 @@
         android:singleLine="true"
         android:ellipsize="marquee"
         android:marqueeRepeatLimit="1"
-        android:layout_weight="1"/>
+        android:layout_weight="1.35"/>
 
     <TextView
         android:id="@+id/tvSeparator1"
@@ -39,7 +39,7 @@
         android:maxLines="2"
         android:ellipsize="end"
         style="@style/font14.bold"
-        android:layout_weight="1.5"/>
+        android:layout_weight="0.8"/>
 
     <TextView
         android:id="@+id/tvSeparator2"
@@ -60,6 +60,6 @@
         android:singleLine="true"
         android:ellipsize="marquee"
         android:marqueeRepeatLimit="1"
-        android:layout_weight="1"/>
+        android:layout_weight="1.35"/>
 
 </LinearLayout>

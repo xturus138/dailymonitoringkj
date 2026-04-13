@@ -190,6 +190,7 @@ class SlideDua : Fragment() {
 
         if (availableWidthDivisi <= 0 || availableWidthProject <= 0) return -1L
 
+        progressAdapter.setAvailableWidths(availableWidthDivisi, availableWidthProject)
         var maxDurationMs = 0L
 
         pageData.forEach { item ->
@@ -206,12 +207,15 @@ class SlideDua : Fragment() {
 
     private fun estimateSingleDuration(content: String, textView: TextView, availableWidth: Int): Long {
         if (content.isBlank() || availableWidth <= 0) return 0L
-        
-        val textWidth = textView.paint.measureText(content)
+
+        // NEW LOGIC: If it fits in 2 lines, it won't scroll.
+        val fitsIn2 = com.karirjepang.dailymonitoringkj.ui.util.MarqueeUtils.fitsInLines(content, textView, availableWidth, 2)
+        if (fitsIn2) return 0L
+
+        val textWidth = textView.paint.measureText(content.replace("\n", " • ").replace("  ", " ").trim())
         if (textWidth <= availableWidth) return 0L
 
         val density = textView.context.resources.displayMetrics.density
-        // Android native marquee speed is exactly 30 * screen density
         // Android native marquee speed is often slower than 30dp/s for long texts
         val speedPxPerSecond = 25f * density
         // Increase padding to ensure user can read the end of the text
