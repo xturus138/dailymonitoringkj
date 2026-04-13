@@ -89,3 +89,19 @@ data class TimeResponse(
     @SerializedName("dayOfWeek") val dayOfWeek: String,
     @SerializedName("dstActive") val dstActive: Boolean
 )
+
+data class JobOrder(
+    @SerializedName("id") val id: Int,
+    @SerializedName("nama_perusahaan") val namaPerusahaan: String,
+    @SerializedName("jumlah_order") val jumlahOrder: Int,
+    @SerializedName("jenis_kelamin") val jenisKelamin: String,
+    @SerializedName("progress") val progress: String,
+    @SerializedName("is_active") val isActive: Boolean,
+    @SerializedName("created_at") val createdAt: String,
+    @SerializedName("updated_at") val updatedAt: String
+)
+
+data class JobOrderResponse(
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("data") val data: List<JobOrder>?
+)

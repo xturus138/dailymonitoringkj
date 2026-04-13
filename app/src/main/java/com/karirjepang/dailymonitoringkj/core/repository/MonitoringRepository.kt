@@ -93,4 +93,13 @@ class MonitoringRepository @Inject constructor(
             throw Exception("Gagal mengambil data mitra") // Lempar error jika gagal
         }
     }
+
+    suspend fun getJobOrders(): List<JobOrder> = withContext(Dispatchers.IO) {
+        val response = apiService.getJobOrders()
+        if (response.isSuccessful) {
+            response.body()?.data ?: emptyList()
+        } else {
+            throw Exception("Gagal mengambil data job order")
+        }
+    }
 }

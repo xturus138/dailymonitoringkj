@@ -24,4 +24,7 @@ interface ApiService {
 
     @GET("partners")
     suspend fun getPartners(): Response<List<Mitra>>
+
+    @GET("job-orders")
+    suspend fun getJobOrders(): Response<JobOrderResponse>
 }
