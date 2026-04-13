@@ -3,6 +3,7 @@ package com.karirjepang.dailymonitoringkj.ui.adapter
 import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.karirjepang.dailymonitoringkj.core.model.Meeting
 import com.karirjepang.dailymonitoringkj.databinding.ItemMeetingBinding
@@ -31,14 +32,29 @@ class MeetingAdapter(private var listMeeting: List<Meeting>) :
             val item = listMeeting[position]
             holder.binding.tvWaktu.text = item.waktu
             holder.binding.tvJudulMeeting.text = item.judul
-            holder.binding.tvJudulMeeting.isSelected = true
+            bindMarqueeWithDelay(holder.binding.tvJudulMeeting, true)
             holder.binding.tvSeparator.visibility = android.view.View.VISIBLE
         } else {
             holder.binding.tvWaktu.text = ""
             holder.binding.tvJudulMeeting.text = ""
-            holder.binding.tvJudulMeeting.isSelected = false
+            bindMarqueeWithDelay(holder.binding.tvJudulMeeting, false)
             holder.binding.tvSeparator.visibility = android.view.View.INVISIBLE
         }
+    }
+
+    private fun bindMarqueeWithDelay(textView: TextView, enabled: Boolean) {
+        val previous = textView.getTag() as? Runnable
+        if (previous != null) textView.removeCallbacks(previous)
+
+        textView.isSelected = false
+        if (!enabled || textView.text.isNullOrBlank()) {
+            textView.setTag(null)
+            return
+        }
+
+        val runnable = Runnable { textView.isSelected = true }
+        textView.setTag(runnable)
+        textView.postDelayed(runnable, 2_000L)
     }
 
     override fun getItemCount(): Int {

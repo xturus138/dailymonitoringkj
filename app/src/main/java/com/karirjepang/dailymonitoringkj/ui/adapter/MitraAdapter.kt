@@ -104,22 +104,46 @@ class MitraAdapter(
 
     override fun getItemCount(): Int = rows.size
 
-    @SuppressLint("NotifyDataSetChanged")
-    fun updateData(newData: List<Mitra>) {
-        listMitra = newData
+    private fun buildRows(data: List<Mitra>): List<List<Mitra>> {
         val newRows = mutableListOf<List<Mitra>>()
         var i = 0
         var isOddRow = true
 
-        while (i < newData.size) {
+        while (i < data.size) {
             val chunkSize = if (isOddRow) spanCount else (spanCount - 1)
-            val end = min(i + chunkSize, newData.size)
-            newRows.add(newData.subList(i, end))
+            val end = min(i + chunkSize, data.size)
+            newRows.add(data.subList(i, end))
             i += chunkSize
             isOddRow = !isOddRow
         }
 
-        rows = newRows
+        return newRows
+    }
+
+    fun getPageCountByRows(rowPerPage: Int, source: List<Mitra>): Int {
+        if (rowPerPage <= 0 || source.isEmpty()) return 0
+        val rowCount = buildRows(source).size
+        return (rowCount + rowPerPage - 1) / rowPerPage
+    }
+
+    fun getPageDataByRows(source: List<Mitra>, rowPerPage: Int, pageIndex: Int): List<Mitra> {
+        if (rowPerPage <= 0 || source.isEmpty()) return emptyList()
+
+        val allRows = buildRows(source)
+        if (allRows.isEmpty()) return emptyList()
+
+        val pageCount = (allRows.size + rowPerPage - 1) / rowPerPage
+        val safePage = pageIndex % pageCount
+        val start = safePage * rowPerPage
+        val end = min(start + rowPerPage, allRows.size)
+
+        return allRows.subList(start, end).flatten()
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    fun updateData(newData: List<Mitra>) {
+        listMitra = newData
+        rows = buildRows(newData)
         notifyDataSetChanged()
     }
 }

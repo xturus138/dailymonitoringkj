@@ -3,6 +3,7 @@ package com.karirjepang.dailymonitoringkj.ui.adapter
 import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.karirjepang.dailymonitoringkj.core.model.ProgressDivisi
 import com.karirjepang.dailymonitoringkj.databinding.ItemProgressDualBinding
@@ -52,14 +53,16 @@ class ProgressDualAdapter(
             holder.binding.tvNamaDivisiLeft.text = item.namaDivisi
             holder.binding.tvProjectLeft.text = item.projectProgress
             holder.binding.tvPersentaseLeft.text = item.persentase
-            holder.binding.tvNamaDivisiLeft.isSelected = true
-            holder.binding.tvProjectLeft.isSelected = true
+            bindMarqueeWithDelay(holder.binding.tvNamaDivisiLeft, item.namaDivisi, true)
+            bindMarqueeWithDelay(holder.binding.tvProjectLeft, item.projectProgress, true)
             holder.binding.tvSeparatorLeft1.visibility = android.view.View.VISIBLE
             holder.binding.tvSeparatorLeft2.visibility = android.view.View.VISIBLE
         } else {
             holder.binding.tvNamaDivisiLeft.text = ""
             holder.binding.tvProjectLeft.text = ""
             holder.binding.tvPersentaseLeft.text = ""
+            bindMarqueeWithDelay(holder.binding.tvNamaDivisiLeft, null, false)
+            bindMarqueeWithDelay(holder.binding.tvProjectLeft, null, false)
             holder.binding.tvNamaDivisiLeft.isSelected = false
             holder.binding.tvProjectLeft.isSelected = false
             holder.binding.tvSeparatorLeft1.visibility = android.view.View.INVISIBLE
@@ -73,19 +76,49 @@ class ProgressDualAdapter(
             holder.binding.tvNamaDivisiRight.text = item.namaDivisi
             holder.binding.tvProjectRight.text = item.projectProgress
             holder.binding.tvPersentaseRight.text = item.persentase
-            holder.binding.tvNamaDivisiRight.isSelected = true
-            holder.binding.tvProjectRight.isSelected = true
+            bindMarqueeWithDelay(holder.binding.tvNamaDivisiRight, item.namaDivisi, true)
+            bindMarqueeWithDelay(holder.binding.tvProjectRight, item.projectProgress, true)
             holder.binding.tvSeparatorRight1.visibility = android.view.View.VISIBLE
             holder.binding.tvSeparatorRight2.visibility = android.view.View.VISIBLE
         } else {
             holder.binding.tvNamaDivisiRight.text = ""
             holder.binding.tvProjectRight.text = ""
             holder.binding.tvPersentaseRight.text = ""
+            bindMarqueeWithDelay(holder.binding.tvNamaDivisiRight, null, false)
+            bindMarqueeWithDelay(holder.binding.tvProjectRight, null, false)
             holder.binding.tvNamaDivisiRight.isSelected = false
             holder.binding.tvProjectRight.isSelected = false
             holder.binding.tvSeparatorRight1.visibility = android.view.View.INVISIBLE
             holder.binding.tvSeparatorRight2.visibility = android.view.View.INVISIBLE
         }
+    }
+
+    private fun bindMarqueeWithDelay(textView: TextView, fullText: String?, enabled: Boolean) {
+        val previous = textView.getTag() as? Runnable
+        if (previous != null) textView.removeCallbacks(previous)
+        textView.setTag(null)
+
+        textView.isSelected = false
+
+        if (!enabled || fullText.isNullOrBlank()) {
+            textView.text = ""
+            return
+        }
+
+        // Flatten multi-line text into a single line so native marquee applies perfectly
+        val flattenedText = fullText.replace("\n", " • ").replace("  ", " ").trim()
+        textView.text = flattenedText
+
+        val runnable = object : Runnable {
+            override fun run() {
+                val currentRunnable = this
+                if (textView.getTag() === currentRunnable) {
+                    textView.isSelected = true
+                }
+            }
+        }
+        textView.setTag(runnable)
+        textView.postDelayed(runnable, 2000L)
     }
 
     override fun getItemCount(): Int {
@@ -98,6 +131,7 @@ class ProgressDualAdapter(
 
     @SuppressLint("NotifyDataSetChanged")
     fun updateData(newData: List<ProgressDivisi>) {
+        if (listProgress == newData) return
         listProgress = newData
         rowCount = if (newData.isEmpty()) 0 else (newData.size + 1) / 2
         notifyDataSetChanged()

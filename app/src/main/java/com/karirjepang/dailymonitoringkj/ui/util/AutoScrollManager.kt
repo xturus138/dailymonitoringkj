@@ -2,113 +2,111 @@ package com.karirjepang.dailymonitoringkj.ui.util
 
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 
+/**
+ * Timer-based paging coordinator.
+ *
+ * - Keeps each page visible for [delayMillis] (or [pageDelayProvider])
+ * - Asks the UI layer to run fade-out/data-swap/fade-in via [onPageTransition]
+ * - Calls [onScrollComplete] after the last page has also finished its dwell time
+ */
 class AutoScrollManager(
-    private val recyclerView: RecyclerView,
-    private val delayMillis: Long = 2000L,
-    private val actualDataCount: Int = 0
+    private val delayMillis: Long = 10_000L,
+    private val totalPages: Int,
+    private val onPageTransition: (nextPageIndex: Int, onTransitionFinished: () -> Unit) -> Unit,
+    private val pageDelayProvider: ((currentPageIndex: Int) -> Long)? = null
 ) {
 
     private val handler = Handler(Looper.getMainLooper())
     private var started = false
-    private var waitingForIdle = false
-    private var currentTarget = -1
-    private val TAG = "AutoScrollManager"
+    private var currentPage = 0
+    private var hasCompletedOneCycle = false
+    private var sessionToken = 0
+    private var completionExpectedToken = 0
 
-    // listener untuk men-trigger scroll berikutnya segera setelah RecyclerView menjadi idle
-    private val scrollListener = object : RecyclerView.OnScrollListener() {
-        override fun onScrollStateChanged(rv: RecyclerView, newState: Int) {
-            if (!started) return
-            Log.d(TAG, "onScrollStateChanged: newState=$newState, waitingForIdle=$waitingForIdle, currentTarget=$currentTarget")
-            if (waitingForIdle && newState == RecyclerView.SCROLL_STATE_IDLE) {
-                waitingForIdle = false
-                Log.d(TAG, "Scroll IDLE, scheduling next scroll. currentTarget=$currentTarget")
-                // Langsung trigger scroll berikutnya tanpa update currentTarget
-                scheduleNextScroll()
+    private var onPageShown: ((Int) -> Unit)? = null
+    private var onScrollComplete: (() -> Unit)? = null
+
+    private val pageRunnable = object : Runnable {
+        override fun run() {
+            if (!started || totalPages <= 1) return
+
+            val expectedToken = sessionToken
+            val nextPage = currentPage + 1
+
+            onPageTransition(nextPage) {
+                if (!started || expectedToken != sessionToken) return@onPageTransition
+
+                currentPage = nextPage
+                onPageShown?.invoke(currentPage)
+
+                if (currentPage >= totalPages - 1) {
+                    scheduleCompletionForCurrentPage()
+                } else {
+                    scheduleNextPage()
+                }
             }
         }
-
-        override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
-            // Jika user menggulir manual saja (bukan otomatis), update currentTarget
-            // Tapi karena ini otomatis scroll, jangan update
-            if (!started) return
-            // Kosongkan: jangan update currentTarget saat otomatis scroll
-        }
     }
 
-    private val initialRunnable = Runnable {
-        if (!started) return@Runnable
-        Log.d(TAG, "initialRunnable executing. actualDataCount=$actualDataCount")
-        // jika data kurang dari 1, tidak perlu scroll
-        if (actualDataCount <= 0) {
-            Log.d(TAG, "actualDataCount <= 0, returning")
-            return@Runnable
-        }
+    private val completionRunnable = Runnable {
+        if (!started || completionExpectedToken != sessionToken || hasCompletedOneCycle) return@Runnable
 
-        // ensure RecyclerView finished layout
-        recyclerView.post {
-            Log.d(TAG, "Post runnable executing on main thread")
-            // set currentTarget ke posisi pertama yang terlihat
-            val lm = recyclerView.layoutManager as? LinearLayoutManager
-            currentTarget = lm?.findFirstVisibleItemPosition() ?: 0
-            if (currentTarget < 0) currentTarget = 0
-            Log.d(TAG, "Starting chain scroll. currentTarget=$currentTarget")
-
-            // langsung mulai chain scrolling
-            scheduleNextScroll()
-        }
+        hasCompletedOneCycle = true
+        started = false
+        onScrollComplete?.invoke()
     }
 
-    private fun scheduleNextScroll() {
-        if (!started) {
-            Log.d(TAG, "scheduleNextScroll: not started, returning")
-            return
-        }
-        val lm = recyclerView.layoutManager as? LinearLayoutManager ?: return
+    fun setOnPageShownListener(listener: ((Int) -> Unit)?) {
+        onPageShown = listener
+    }
 
-        // Hitung next position SEBELUM scroll
-        val nextTarget = if (currentTarget >= actualDataCount - 1) 0 else currentTarget + 1
-        currentTarget = nextTarget
-        Log.d(TAG, "scheduleNextScroll: scrolling to position $currentTarget (actualDataCount=$actualDataCount)")
-
-        // mulai smooth scroll ke next position
-        val scroller = SmoothLinearScroller(recyclerView.context)
-        scroller.targetPosition = nextTarget
-        // set flag agar OnScrollListener memicu scheduleNextScroll setelah scroller selesai
-        waitingForIdle = true
-        lm.startSmoothScroll(scroller)
+    fun setOnScrollCompleteListener(listener: (() -> Unit)?) {
+        onScrollComplete = listener
     }
 
     fun startAutoScroll() {
-        if (started) {
-            Log.d(TAG, "startAutoScroll: already started, ignoring")
+        if (started) return
+        started = true
+        currentPage = 0
+        hasCompletedOneCycle = false
+        sessionToken++
+
+        onPageShown?.invoke(currentPage)
+
+        if (totalPages <= 1) {
+            scheduleCompletionForCurrentPage()
             return
         }
-        Log.d(TAG, "startAutoScroll: starting. delayMillis=$delayMillis, actualDataCount=$actualDataCount")
-        started = true
-        // pasang listener
-        recyclerView.addOnScrollListener(scrollListener)
-        // tunggu delay awal sekali saja lalu mulai scrolling continuous (post to ensure layout)
-        handler.postDelayed({
-            Log.d(TAG, "Delay completed, posting initialRunnable")
-            recyclerView.post(initialRunnable)
-        }, delayMillis)
+
+        scheduleNextPage()
+    }
+
+    private fun scheduleNextPage() {
+        handler.removeCallbacks(pageRunnable)
+        if (!started) return
+
+        val delayForCurrentPage = pageDelayProvider?.invoke(currentPage) ?: delayMillis
+        handler.postDelayed(pageRunnable, delayForCurrentPage.coerceAtLeast(0L))
+    }
+
+    private fun scheduleCompletionForCurrentPage() {
+        handler.removeCallbacks(completionRunnable)
+        if (!started) return
+
+        completionExpectedToken = sessionToken
+        val delayForCurrentPage = pageDelayProvider?.invoke(currentPage) ?: delayMillis
+        handler.postDelayed(completionRunnable, delayForCurrentPage.coerceAtLeast(0L))
     }
 
     fun stopAutoScroll() {
-        if (!started) return
-        Log.d(TAG, "stopAutoScroll: stopping")
         started = false
-        waitingForIdle = false
-        handler.removeCallbacks(initialRunnable)
-        recyclerView.removeOnScrollListener(scrollListener)
+        sessionToken++
+        handler.removeCallbacks(pageRunnable)
+        handler.removeCallbacks(completionRunnable)
     }
 
     fun cleanup() {
-        Log.d(TAG, "cleanup: cleaning up")
         stopAutoScroll()
     }
 }

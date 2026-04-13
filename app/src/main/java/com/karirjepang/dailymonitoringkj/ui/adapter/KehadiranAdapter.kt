@@ -3,9 +3,11 @@ package com.karirjepang.dailymonitoringkj.ui.adapter
 import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.karirjepang.dailymonitoringkj.core.model.Kehadiran
 import com.karirjepang.dailymonitoringkj.databinding.ItemKehadiranBinding
+import kotlin.math.min
 
 class KehadiranAdapter(private var listKehadiran: List<Kehadiran>) :
     RecyclerView.Adapter<KehadiranAdapter.ViewHolder>() {
@@ -34,8 +36,8 @@ class KehadiranAdapter(private var listKehadiran: List<Kehadiran>) :
             holder.binding.tvStatus.text = item.status
             holder.binding.tvKeterangan.text = item.keterangan ?: ""
 
-            holder.binding.tvNamaStaff.isSelected = true
-            holder.binding.tvKeterangan.isSelected = true
+            bindMarqueeWithDelay(holder.binding.tvNamaStaff, true)
+            bindMarqueeWithDelay(holder.binding.tvKeterangan, true)
 
             // Munculkan pemisah
             holder.binding.tvSeparator1.visibility = android.view.View.VISIBLE
@@ -49,10 +51,28 @@ class KehadiranAdapter(private var listKehadiran: List<Kehadiran>) :
             holder.binding.tvNamaStaff.isSelected = false
             holder.binding.tvKeterangan.isSelected = false
 
+            bindMarqueeWithDelay(holder.binding.tvNamaStaff, false)
+            bindMarqueeWithDelay(holder.binding.tvKeterangan, false)
+
             // Sembunyikan pemisah
             holder.binding.tvSeparator1.visibility = android.view.View.INVISIBLE
             holder.binding.tvSeparator2.visibility = android.view.View.INVISIBLE
         }
+    }
+
+    private fun bindMarqueeWithDelay(textView: TextView, enabled: Boolean) {
+        val previous = textView.getTag() as? Runnable
+        if (previous != null) textView.removeCallbacks(previous)
+
+        textView.isSelected = false
+        if (!enabled || textView.text.isNullOrBlank()) {
+            textView.setTag(null)
+            return
+        }
+
+        val runnable = Runnable { textView.isSelected = true }
+        textView.setTag(runnable)
+        textView.postDelayed(runnable, 2_000L)
     }
 
     override fun getItemCount(): Int {
@@ -65,5 +85,22 @@ class KehadiranAdapter(private var listKehadiran: List<Kehadiran>) :
     fun updateData(newData: List<Kehadiran>) {
         listKehadiran = newData
         notifyDataSetChanged()
+    }
+
+    fun getPageCount(pageSize: Int, sourceSize: Int): Int {
+        if (pageSize <= 0 || sourceSize <= 0) return 0
+        return (sourceSize + pageSize - 1) / pageSize
+    }
+
+    fun getPageData(source: List<Kehadiran>, pageSize: Int, pageIndex: Int): List<Kehadiran> {
+        if (source.isEmpty() || pageSize <= 0) return emptyList()
+
+        val pageCount = getPageCount(pageSize, source.size)
+        if (pageCount <= 0) return emptyList()
+
+        val safePage = pageIndex % pageCount
+        val start = safePage * pageSize
+        val end = min(start + pageSize, source.size)
+        return source.subList(start, end)
     }
 }

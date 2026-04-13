@@ -70,4 +70,21 @@ class ProgressAdapter(private var listProgress: List<ProgressDivisi>) :
         listProgress = newData
         notifyDataSetChanged()
     }
+
+    fun getPageCount(pageSize: Int, sourceSize: Int): Int {
+        if (pageSize <= 0 || sourceSize <= 0) return 0
+        return (sourceSize + pageSize - 1) / pageSize
+    }
+
+    fun getPageData(source: List<ProgressDivisi>, pageSize: Int, pageIndex: Int): List<ProgressDivisi> {
+        if (source.isEmpty() || pageSize <= 0) return emptyList()
+
+        val pageCount = getPageCount(pageSize, source.size)
+        if (pageCount <= 0) return emptyList()
+
+        val safePage = pageIndex % pageCount
+        val start = safePage * pageSize
+        val end = minOf(start + pageSize, source.size)
+        return source.subList(start, end)
+    }
 }

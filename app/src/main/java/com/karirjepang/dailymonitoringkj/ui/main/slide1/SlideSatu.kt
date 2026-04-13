@@ -1,20 +1,23 @@
 package com.karirjepang.dailymonitoringkj.ui.main.slide1
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.Animation
+import android.view.animation.AnimationUtils
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.karirjepang.dailymonitoringkj.R
+import com.karirjepang.dailymonitoringkj.core.model.Kehadiran
+import com.karirjepang.dailymonitoringkj.core.model.Meeting
 import com.karirjepang.dailymonitoringkj.databinding.FragmentSlideSatuBinding
 import com.karirjepang.dailymonitoringkj.ui.adapter.KehadiranAdapter
 import com.karirjepang.dailymonitoringkj.ui.adapter.MeetingAdapter
-import com.karirjepang.dailymonitoringkj.ui.util.ContinuousScrollManager
-import com.karirjepang.dailymonitoringkj.ui.util.SynchronizedScrollListener
-import com.karirjepang.dailymonitoringkj.ui.util.SmoothLinearLayoutManager
+import com.karirjepang.dailymonitoringkj.ui.util.AutoScrollManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeoutOrNull
@@ -29,35 +32,31 @@ class SlideSatu : Fragment() {
     private var _binding: FragmentSlideSatuBinding? = null
     private val binding get() = _binding!!
 
-    // Only ONE manager drives scrolling; meeting mirrors kehadiran via SynchronizedScrollListener
-    private var autoScrollManager: ContinuousScrollManager? = null
-    private var syncKehadiranToMeeting: SynchronizedScrollListener? = null
+    private var pagingManager: AutoScrollManager? = null
 
-    private var kehadiranDataSize: Int = 0
-    private var meetingDataSize: Int = 0
+    private var fullKehadiran: List<Kehadiran> = emptyList()
+    private var fullMeeting: List<Meeting> = emptyList()
+    private var kehadiranRowsPerPage: Int = 0
+    private var meetingRowsPerPage: Int = 0
 
     private var scrollFinishedDeferred: CompletableDeferred<Unit> = CompletableDeferred()
-
-    private val TAG = "SlideSatu"
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         _binding = FragmentSlideSatuBinding.inflate(inflater, container, false)
-        Log.d(TAG, "onCreateView")
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Log.d(TAG, "onViewCreated")
 
         kehadiranAdapter = KehadiranAdapter(emptyList())
-        binding.rvKehadiran.layoutManager = SmoothLinearLayoutManager(requireContext())
+        binding.rvKehadiran.layoutManager = LinearLayoutManager(requireContext())
         binding.rvKehadiran.adapter = kehadiranAdapter
 
         meetingAdapter = MeetingAdapter(emptyList())
-        binding.rvMeeting.layoutManager = SmoothLinearLayoutManager(requireContext())
+        binding.rvMeeting.layoutManager = LinearLayoutManager(requireContext())
         binding.rvMeeting.adapter = meetingAdapter
 
         binding.rvKehadiran.post { updateVisibleCounts() }
@@ -66,88 +65,142 @@ class SlideSatu : Fragment() {
         observeData()
     }
 
-    /** Calculate how many rows fit in each RecyclerView and tell the adapters.
-     *  Row height = 56dp item + 6dp marginTop = 62dp total per row. */
     private fun updateVisibleCounts() {
         if (_binding == null) return
+
         val rowHeightPx = resources.getDimensionPixelSize(R.dimen.signage_row_height)
         val marginPx = resources.getDimensionPixelSize(R.dimen.dimen_margin_6)
         val itemHeightPx = rowHeightPx + marginPx
-
         if (itemHeightPx <= 0) return
 
         val rvKehadiranHeight = binding.rvKehadiran.height
         if (rvKehadiranHeight > 0) {
-            kehadiranAdapter.setVisibleItemCount(rvKehadiranHeight / itemHeightPx)
+            kehadiranRowsPerPage = (rvKehadiranHeight / itemHeightPx).coerceAtLeast(1)
+            kehadiranAdapter.setVisibleItemCount(kehadiranRowsPerPage)
         }
 
         val rvMeetingHeight = binding.rvMeeting.height
         if (rvMeetingHeight > 0) {
-            meetingAdapter.setVisibleItemCount(rvMeetingHeight / itemHeightPx)
+            meetingRowsPerPage = (rvMeetingHeight / itemHeightPx).coerceAtLeast(1)
+            meetingAdapter.setVisibleItemCount(meetingRowsPerPage)
         }
+
+        rebuildPagingManagerIfReady()
     }
 
     private fun observeData() {
-        Log.d(TAG, "observeData: setting up observers")
-
         viewModel.kehadiranList.observe(viewLifecycleOwner) { data ->
-            Log.d(TAG, "kehadiranList observed: size=${data.size}, lifecycle=${viewLifecycleOwner.lifecycle.currentState}")
-            kehadiranDataSize = data.size
-            kehadiranAdapter.updateData(data)
-            _binding?.rvKehadiran?.post { updateVisibleCounts() }
-            rebuildScrollManager()
+            fullKehadiran = data
+            rebuildPagingManagerIfReady()
         }
 
         viewModel.meetingList.observe(viewLifecycleOwner) { data ->
-            Log.d(TAG, "meetingList observed: size=${data.size}")
-            meetingDataSize = data.size
-            meetingAdapter.updateData(data)
-            _binding?.rvMeeting?.post { updateVisibleCounts() }
-            rebuildScrollManager()
+            fullMeeting = data
+            rebuildPagingManagerIfReady()
         }
     }
 
-    /**
-     * Kehadiran is always the driver (it has the larger or equal data count).
-     * Meeting mirrors kehadiran's scroll via SynchronizedScrollListener.
-     * If meeting is empty, kehadiran scrolls alone (no mirror needed).
-     */
-    private fun rebuildScrollManager() {
-        autoScrollManager?.stopAutoScroll()
-        autoScrollManager = null
+    private fun rebuildPagingManagerIfReady() {
+        if (_binding == null) return
+        if (kehadiranRowsPerPage <= 0 || meetingRowsPerPage <= 0) return
 
-        syncKehadiranToMeeting?.let { binding.rvKehadiran.removeOnScrollListener(it) }
-        syncKehadiranToMeeting = null
+        pagingManager?.stopAutoScroll()
+        pagingManager = null
 
-        if (kehadiranDataSize <= 0) {
+        val kehadiranPages = calculatePageCount(fullKehadiran.size, kehadiranRowsPerPage)
+        val meetingPages = calculatePageCount(fullMeeting.size, meetingRowsPerPage)
+        val totalPages = maxOf(kehadiranPages, meetingPages)
+
+        if (totalPages <= 0) {
+            applyPage(0)
             setupScrollFinishedWatcher(null)
             return
         }
 
-        autoScrollManager = ContinuousScrollManager(
-            recyclerView = binding.rvKehadiran,
-            delayMillis = 2000,
-            actualDataCount = kehadiranDataSize
-        )
+        pagingManager = AutoScrollManager(
+            delayMillis = 10_000L,
+            totalPages = totalPages,
+            onPageTransition = { nextPage, onTransitionFinished ->
+                runFadeTransition(nextPage, onTransitionFinished)
+            },
+            pageDelayProvider = { currentPage ->
+                calculateDwellDelayForPage(currentPage)
+            }
+        ).also { manager ->
+            manager.setOnPageShownListener { pageIndex ->
+                applyPage(pageIndex)
+            }
 
-        // Mirror kehadiran → meeting only when meeting has data
-        if (meetingDataSize > 0) {
-            syncKehadiranToMeeting = SynchronizedScrollListener(binding.rvMeeting)
-            binding.rvKehadiran.addOnScrollListener(syncKehadiranToMeeting!!)
-        } else {
-            // Reset meeting scroll position to top
-            binding.rvMeeting.scrollToPosition(0)
+            if (viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+                manager.startAutoScroll()
+            }
         }
 
-        if (viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
-            Log.d(TAG, "Fragment RESUMED, starting autoScroll")
-            autoScrollManager?.startAutoScroll()
-        }
-
-        setupScrollFinishedWatcher(autoScrollManager)
+        setupScrollFinishedWatcher(pagingManager)
     }
 
-    private fun setupScrollFinishedWatcher(manager: ContinuousScrollManager?) {
+    private fun runFadeTransition(nextPage: Int, onFinished: () -> Unit) {
+        if (_binding == null) {
+            onFinished()
+            return
+        }
+
+        val target = binding.containerTable
+        val fadeOut = AnimationUtils.loadAnimation(requireContext(), R.anim.fade_out_slow)
+        val fadeIn = AnimationUtils.loadAnimation(requireContext(), R.anim.fade_in_slow)
+
+        fadeOut.setAnimationListener(object : Animation.AnimationListener {
+            override fun onAnimationStart(animation: Animation?) = Unit
+
+            override fun onAnimationEnd(animation: Animation?) {
+                if (_binding == null) {
+                    onFinished()
+                    return
+                }
+
+                applyPage(nextPage)
+                target.clearAnimation()
+
+                fadeIn.setAnimationListener(object : Animation.AnimationListener {
+                    override fun onAnimationStart(animation: Animation?) = Unit
+                    override fun onAnimationRepeat(animation: Animation?) = Unit
+                    override fun onAnimationEnd(animation: Animation?) {
+                        target.clearAnimation()
+                        onFinished()
+                    }
+                })
+                target.startAnimation(fadeIn)
+            }
+
+            override fun onAnimationRepeat(animation: Animation?) = Unit
+        })
+
+        target.startAnimation(fadeOut)
+    }
+
+    private fun applyPage(pageIndex: Int) {
+        kehadiranAdapter.updateData(getPageData(fullKehadiran, kehadiranRowsPerPage, pageIndex))
+        meetingAdapter.updateData(getPageData(fullMeeting, meetingRowsPerPage, pageIndex))
+    }
+
+    private fun <T> getPageData(source: List<T>, pageSize: Int, pageIndex: Int): List<T> {
+        if (source.isEmpty() || pageSize <= 0) return emptyList()
+        val pageCount = calculatePageCount(source.size, pageSize)
+        if (pageCount <= 0) return emptyList()
+
+        val safePageIndex = pageIndex % pageCount
+        val start = safePageIndex * pageSize
+        if (start >= source.size) return emptyList()
+        val end = minOf(start + pageSize, source.size)
+        return source.subList(start, end)
+    }
+
+    private fun calculatePageCount(itemCount: Int, pageSize: Int): Int {
+        if (itemCount <= 0 || pageSize <= 0) return 0
+        return (itemCount + pageSize - 1) / pageSize
+    }
+
+    private fun setupScrollFinishedWatcher(manager: AutoScrollManager?) {
         val deferred = CompletableDeferred<Unit>()
         scrollFinishedDeferred = deferred
 
@@ -159,6 +212,104 @@ class SlideSatu : Fragment() {
         manager.setOnScrollCompleteListener {
             if (!deferred.isCompleted) deferred.complete(Unit)
         }
+    }
+
+    private fun calculateDwellDelayForPage(pageIndex: Int): Long {
+        val kehadiranPage = getPageData(fullKehadiran, kehadiranRowsPerPage, pageIndex)
+        val meetingPage = getPageData(fullMeeting, meetingRowsPerPage, pageIndex)
+
+        val measuredDelay = estimateMarqueeWaitFromData(kehadiranPage, meetingPage)
+        if (measuredDelay != -1L) {
+            return (measuredDelay + 3_700L).coerceIn(6_000L, 60_000L)
+        }
+
+        val kehadiranMax = kehadiranPage.maxOfOrNull { maxOf(it.nama.length, it.keterangan?.length ?: 0) } ?: 0
+        val meetingMax = meetingPage.maxOfOrNull { it.judul?.length ?: 0 } ?: 0
+
+        val fallback = 6_000L + (maxOf(kehadiranMax, meetingMax) * 100L)
+        return fallback.coerceIn(6_000L, 60_000L)
+    }
+
+    private fun estimateMarqueeWaitFromData(kehadiranData: List<Kehadiran>, meetingData: List<Meeting>): Long {
+        if (_binding == null) return -1L
+
+        var maxDurationMs = 0L
+
+        val tvNamaK: TextView
+        val tvKetK: TextView
+        var availableNama = 0
+        var availableKet = 0
+
+        if (binding.rvKehadiran.childCount > 0) {
+            val sampleChildK = binding.rvKehadiran.getChildAt(0)
+            tvNamaK = sampleChildK.findViewById(R.id.tvNamaStaff) ?: return -1L
+            tvKetK = sampleChildK.findViewById(R.id.tvKeterangan) ?: return -1L
+            availableNama = (tvNamaK.width - tvNamaK.paddingLeft - tvNamaK.paddingRight).coerceAtLeast(0)
+            availableKet = (tvKetK.width - tvKetK.paddingLeft - tvKetK.paddingRight).coerceAtLeast(0)
+        } else {
+            val headerK = binding.linearLayoutHeaderKehadiran
+            tvNamaK = headerK.getChildAt(0) as? TextView ?: return -1L
+            tvKetK = headerK.getChildAt(2) as? TextView ?: return -1L
+            val rvWidth = binding.rvKehadiran.width
+            if (rvWidth > 0) {
+                val marginPx = 40f * tvNamaK.context.resources.displayMetrics.density
+                availableNama = ((rvWidth - marginPx) * (1.0f / 3.5f)).toInt().coerceAtLeast(0)
+                availableKet = ((rvWidth - marginPx) * (1.0f / 3.5f)).toInt().coerceAtLeast(0)
+            }
+        }
+
+        if (availableNama > 0 && availableKet > 0) {
+            kehadiranData.forEach { item ->
+                val namaDur = estimateSingleDuration(item.nama, tvNamaK, availableNama)
+                if (namaDur > maxDurationMs) maxDurationMs = namaDur
+
+                val ketDur = estimateSingleDuration(item.keterangan ?: "", tvKetK, availableKet)
+                if (ketDur > maxDurationMs) maxDurationMs = ketDur
+            }
+        }
+
+        val tvJudulM: TextView
+        var availableJudul = 0
+
+        if (binding.rvMeeting.childCount > 0) {
+            val sampleChildM = binding.rvMeeting.getChildAt(0)
+            tvJudulM = sampleChildM.findViewById(R.id.tvJudulMeeting) ?: return -1L
+            availableJudul = (tvJudulM.width - tvJudulM.paddingLeft - tvJudulM.paddingRight).coerceAtLeast(0)
+        } else {
+            val headerM = binding.linearLayoutHeaderMeeting
+            tvJudulM = headerM.getChildAt(1) as? TextView ?: return -1L
+            val rvWidth = binding.rvMeeting.width
+            if (rvWidth > 0) {
+                val marginPx = 40f * tvJudulM.context.resources.displayMetrics.density
+                availableJudul = ((rvWidth - marginPx) * (1.5f / 2.5f)).toInt().coerceAtLeast(0)
+            }
+        }
+
+        if (availableJudul > 0) {
+            meetingData.forEach { item ->
+                val judulDur = estimateSingleDuration(item.judul ?: "", tvJudulM, availableJudul)
+                if (judulDur > maxDurationMs) maxDurationMs = judulDur
+            }
+        }
+
+        if ((binding.rvKehadiran.childCount == 0 && availableNama <= 0) || 
+            (binding.rvMeeting.childCount == 0 && availableJudul <= 0)) {
+            return -1L
+        }
+
+        return maxDurationMs
+    }
+
+    private fun estimateSingleDuration(content: String, textView: TextView, availableWidth: Int): Long {
+        if (content.isBlank() || availableWidth <= 0) return 0L
+
+        val textWidth = textView.paint.measureText(content)
+        if (textWidth <= availableWidth) return 0L
+
+        val density = textView.context.resources.displayMetrics.density
+        val speedPxPerSecond = 30f * density
+        val distancePx = textWidth - availableWidth + 80f
+        return ((distancePx / speedPxPerSecond) * 1000f).toLong().coerceAtLeast(0L)
     }
 
     suspend fun awaitScrollFinishedWithin(timeoutMs: Long): Boolean {
@@ -178,20 +329,17 @@ class SlideSatu : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        Log.d(TAG, "onResume: calling startAutoScroll")
-        autoScrollManager?.startAutoScroll()
+        pagingManager?.startAutoScroll()
     }
 
     override fun onPause() {
         super.onPause()
-        Log.d(TAG, "onPause: calling stopAutoScroll")
-        autoScrollManager?.stopAutoScroll()
+        pagingManager?.stopAutoScroll()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        Log.d(TAG, "onDestroyView")
-        autoScrollManager?.cleanup()
+        pagingManager?.cleanup()
         _binding = null
     }
 }
