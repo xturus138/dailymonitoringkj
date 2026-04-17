@@ -75,3 +75,5 @@ The system includes synchronization and connectivity monitoring features:
 Below are example screens from the monitoring dashboard.
 
 ![Slide Display](result.png)
+<img width="1600" height="1200" alt="WhatsApp Image 2026-04-13 at 11 50 12" src="https://github.com/user-attachments/assets/3ec62f6d-73c5-46be-b4e7-1f9b2b13bf13" />
+
