@@ -168,10 +168,10 @@ class MainActivity : FragmentActivity() {
         lifecycleScope.launch {
             while (isActive) {
                 // testing
-//                val fragment: Fragment = when (currentSlideIndex) {
-//                    0 -> SlideSatu()
-//                    else -> SlideDua()
-//                }
+                val fragment: Fragment = when (currentSlideIndex) {
+                    0 -> SlideSatu()
+                    else -> SlideDua()
+                }
                 //layar 1
 //                val fragment: Fragment = when (currentSlideIndex) {
 //                    0 -> SlideSatu()
@@ -180,10 +180,10 @@ class MainActivity : FragmentActivity() {
 //                }
 
                 //layar 2
-                val fragment: Fragment = when (currentSlideIndex) {
-                    0 -> SlideTiga()
-                    else -> SlideEmpat()
-                }
+//                val fragment: Fragment = when (currentSlideIndex) {
+//                    0 -> SlideTiga()
+//                    else -> SlideEmpat()
+//                }
 
                 val anim = SlideAnimationConfig.current
 
