@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/signage_row_height"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_marginTop="@dimen/dimen_margin_6"
+    android:baselineAligned="false"
+    android:orientation="horizontal">
+
+    <LinearLayout
+        android:id="@+id/leftColumn"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_marginEnd="@dimen/dimen_margin_large"
+        android:paddingVertical="6dp"
+        android:gravity="center_vertical"
+        android:background="@color/color_secondary"
+        android:baselineAligned="false"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tvTanggalTerbit"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            style="@style/font14.bold"
+            android:textAlignment="center"
+            android:gravity="center"
+            android:singleLine="true"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="1"
+            android:layout_weight="2"
+            tools:text="23/08/2027"/>
+
+        <TextView
+            android:id="@+id/tvSeparatorLeft1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="8dp"
+            android:text=">"
+            style="@style/font14.bold" />
+
+        <TextView
+            android:id="@+id/tvNamaPerusahaan"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            style="@style/font14.bold"
+            android:textAlignment="center"
+            android:gravity="center"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:layout_weight="2"
+            tools:text="KIMURA TAKASHI (TSUCHINOWA NOUEN)"/>
+
+        <TextView
+            android:id="@+id/tvSeparatorLeft2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="8dp"
+            android:text=">"
+            style="@style/font14.bold" />
+
+        <TextView
+            android:id="@+id/tvNamaLPK"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            style="@style/font14.bold"
+            android:textAlignment="center"
+            android:gravity="center"
+            android:singleLine="true"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="1"
+            android:layout_weight="2"/>
+
+        <TextView
+            android:id="@+id/tvSeparatorLeft3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="8dp"
+            android:text=">"
+            style="@style/font14.bold" />
+
+        <TextView
+            android:id="@+id/tvJumlahKandidat"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            style="@style/font14.bold"
+            android:textAlignment="center"
+            android:gravity="center"
+            android:singleLine="true"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="1"
+            android:layout_weight="0.8"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/rightColumn"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:paddingVertical="6dp"
+        android:gravity="center_vertical"
+        android:background="@color/color_secondary"
+        android:baselineAligned="false"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tvTanggalTerbitRight"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            style="@style/font14.bold"
+            android:textAlignment="center"
+            android:gravity="center"
+            android:singleLine="true"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="1"
+            android:layout_weight="2"
+            tools:text="23/08/2027"/>
+
+        <TextView
+            android:id="@+id/tvSeparatorRight1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="8dp"
+            android:text=">"
+            style="@style/font14.bold" />
+
+        <TextView
+            android:id="@+id/tvNamaPerusahaanRight"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            style="@style/font14.bold"
+            android:textAlignment="center"
+            android:gravity="center"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:layout_weight="2"
+            tools:text="KIMURA TAKASHI (TSUCHINOWA NOUEN)"/>
+
+        <TextView
+            android:id="@+id/tvSeparatorRight2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="8dp"
+            android:text=">"
+            style="@style/font14.bold" />
+
+        <TextView
+            android:id="@+id/tvNamaLPKRight"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            style="@style/font14.bold"
+            android:textAlignment="center"
+            android:gravity="center"
+            android:singleLine="true"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="1"
+            android:layout_weight="2"/>
+
+        <TextView
+            android:id="@+id/tvSeparatorRight3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="8dp"
+            android:text=">"
+            style="@style/font14.bold" />
+
+        <TextView
+            android:id="@+id/tvJumlahKandidatRight"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            style="@style/font14.bold"
+            android:textAlignment="center"
+            android:gravity="center"
+            android:singleLine="true"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="1"
+            android:layout_weight="0.8"/>
+
+    </LinearLayout>
+
+</LinearLayout>
