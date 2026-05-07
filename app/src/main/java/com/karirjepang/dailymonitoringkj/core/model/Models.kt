@@ -105,3 +105,11 @@ data class JobOrderResponse(
     @SerializedName("success") val success: Boolean,
     @SerializedName("data") val data: List<JobOrder>?
 )
+
+data class JadwalTerbitCOE(
+    @SerializedName("id") val id: Int,
+    @SerializedName("tanggal_terbit") val tanggalTerbit: String,
+    @SerializedName("nama_perusahaan") val namaPerusahaan: String,
+    @SerializedName("nama_lpk") val namaLpk: String,
+    @SerializedName("jumlah_kandidat") val jumlahKandidat: Int
+)

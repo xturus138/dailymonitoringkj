@@ -27,4 +27,7 @@ interface ApiService {
 
     @GET("job-orders")
     suspend fun getJobOrders(): Response<JobOrderResponse>
+
+    @GET("coe-schedules")
+    suspend fun getCoeSchedules(): Response<List<JadwalTerbitCOE>>
 }

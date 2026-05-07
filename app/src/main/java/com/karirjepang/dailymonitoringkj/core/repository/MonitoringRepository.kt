@@ -102,4 +102,13 @@ class MonitoringRepository @Inject constructor(
             throw Exception("Gagal mengambil data job order")
         }
     }
+
+    suspend fun getJadwalTerbitCOE(): List<JadwalTerbitCOE> = withContext(Dispatchers.IO) {
+        val response = apiService.getCoeSchedules()
+        if (response.isSuccessful) {
+            response.body() ?: emptyList()
+        } else {
+            throw Exception("Gagal mengambil data jadwal terbit COE")
+        }
+    }
 }

@@ -17,6 +17,7 @@ import com.karirjepang.dailymonitoringkj.ui.main.slide2.SlideDua
 import com.karirjepang.dailymonitoringkj.ui.main.slide3.SlideTiga
 import com.karirjepang.dailymonitoringkj.ui.main.slide4.SlideEmpat
 import com.karirjepang.dailymonitoringkj.ui.main.slide5.SlideLima
+import com.karirjepang.dailymonitoringkj.ui.main.slide6.SlideEnam
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -168,22 +169,21 @@ class MainActivity : FragmentActivity() {
         lifecycleScope.launch {
             while (isActive) {
                 // testing
-                val fragment: Fragment = when (currentSlideIndex) {
-                    0 -> SlideSatu()
-                    else -> SlideDua()
-                }
-                //layar 1
 //                val fragment: Fragment = when (currentSlideIndex) {
 //                    0 -> SlideSatu()
 //                    1 -> SlideDua()
-//                    else -> SlideLima()
+//                    2 -> SlideTiga()
+//                    3 -> SlideEmpat()
+//                    4 -> SlideLima()
+//                    5 -> SlideEnam()
+//                    else -> SlideSatu()
 //                }
 
-                //layar 2
-//                val fragment: Fragment = when (currentSlideIndex) {
-//                    0 -> SlideTiga()
-//                    else -> SlideEmpat()
-//                }
+                val fragment: Fragment = when (currentSlideIndex) {
+                    0 -> SlideDua()
+                    1 -> SlideEnam()
+                    else -> SlideEnam()
+                }
 
                 val anim = SlideAnimationConfig.current
 
@@ -206,8 +206,7 @@ class MainActivity : FragmentActivity() {
                     }
                 }
 
-//                val nextSlideIndex = (currentSlideIndex + 1) % 4
-                val nextSlideIndex = (currentSlideIndex + 1) % 3
+                val nextSlideIndex = (currentSlideIndex + 1) % 2
 
                 val startTime = System.currentTimeMillis()
                 val minDisplayMs = 10_000L
@@ -221,11 +220,19 @@ class MainActivity : FragmentActivity() {
                         fragment.awaitScrollFinished()
                         delay(3000)
                     }
+                    is SlideTiga -> {
+                        // SlideTiga is a static chart, no scrolling needed
+                        delay(3000)
+                    }
+                    is SlideEmpat -> {
+                        fragment.awaitScrollFinished()
+                        delay(3000)
+                    }
                     is SlideLima -> {
                         fragment.awaitScrollFinished()
                         delay(3000)
                     }
-                    is SlideEmpat -> {
+                    is SlideEnam -> {
                         fragment.awaitScrollFinished()
                         delay(3000)
                     }

@@ -28,8 +28,8 @@
             android:gravity="center"
             android:singleLine="true"
             android:ellipsize="marquee"
-            android:marqueeRepeatLimit="1"
-            android:layout_weight="2"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:layout_weight="1.5"
             tools:text="23/08/2027"/>
 
         <TextView
@@ -48,7 +48,8 @@
             android:textAlignment="center"
             android:gravity="center"
             android:singleLine="true"
-            android:ellipsize="end"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="marquee_forever"
             android:layout_weight="2"
             tools:text="KIMURA TAKASHI (TSUCHINOWA NOUEN)"/>
 
@@ -69,7 +70,7 @@
             android:gravity="center"
             android:singleLine="true"
             android:ellipsize="marquee"
-            android:marqueeRepeatLimit="1"
+            android:marqueeRepeatLimit="marquee_forever"
             android:layout_weight="2"/>
 
         <TextView
@@ -89,7 +90,7 @@
             android:gravity="center"
             android:singleLine="true"
             android:ellipsize="marquee"
-            android:marqueeRepeatLimit="1"
+            android:marqueeRepeatLimit="marquee_forever"
             android:layout_weight="0.8"/>
 
     </LinearLayout>
@@ -114,7 +115,7 @@
             android:gravity="center"
             android:singleLine="true"
             android:ellipsize="marquee"
-            android:marqueeRepeatLimit="1"
+            android:marqueeRepeatLimit="marquee_forever"
             android:layout_weight="2"
             tools:text="23/08/2027"/>
 
@@ -134,7 +135,8 @@
             android:textAlignment="center"
             android:gravity="center"
             android:singleLine="true"
-            android:ellipsize="end"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="marquee_forever"
             android:layout_weight="2"
             tools:text="KIMURA TAKASHI (TSUCHINOWA NOUEN)"/>
 
@@ -155,7 +157,7 @@
             android:gravity="center"
             android:singleLine="true"
             android:ellipsize="marquee"
-            android:marqueeRepeatLimit="1"
+            android:marqueeRepeatLimit="marquee_forever"
             android:layout_weight="2"/>
 
         <TextView
@@ -175,7 +177,7 @@
             android:gravity="center"
             android:singleLine="true"
             android:ellipsize="marquee"
-            android:marqueeRepeatLimit="1"
+            android:marqueeRepeatLimit="marquee_forever"
             android:layout_weight="0.8"/>
 
     </LinearLayout>

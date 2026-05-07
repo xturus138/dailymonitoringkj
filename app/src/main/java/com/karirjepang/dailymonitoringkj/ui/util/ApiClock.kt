@@ -16,11 +16,15 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Singleton clock that fetches the current time from TimeAPI (Asia/Jakarta) once,
+ * Thread-safe singleton clock that fetches the current time from TimeAPI (Asia/Jakarta) once,
  * then ticks locally every second. Re-syncs with the API every [RESYNC_INTERVAL_MS].
  *
- * Because it's a singleton, all slides share the same LiveData —
- * no more "flash of local time" when switching slides.
+ * Features:
+ * - All calendar accesses are synchronized to prevent race conditions
+ * - Uses volatile cached date string for thread-safe access from IO threads
+ * - Device time is displayed immediately while API sync happens in background
+ * - Because it's a singleton, all slides share the same LiveData —
+ *   no more "flash of local time" when switching slides.
  */
 @Singleton
 class ApiClock @Inject constructor(
@@ -39,6 +43,7 @@ class ApiClock @Inject constructor(
     private val calendar = Calendar.getInstance(
         TimeZone.getTimeZone("Asia/Jakarta"), Locale("id", "ID")
     )
+    private val calendarLock = Object()
 
     @Volatile
     private var started = false
@@ -109,13 +114,21 @@ class ApiClock @Inject constructor(
             val response = timeApiService.getCurrentTime()
             val timeResponse = if (response.isSuccessful) response.body() else null
             if (timeResponse != null) {
-                calendar.set(Calendar.YEAR, timeResponse.year)
-                calendar.set(Calendar.MONTH, timeResponse.month - 1)
-                calendar.set(Calendar.DAY_OF_MONTH, timeResponse.day)
-                calendar.set(Calendar.HOUR_OF_DAY, timeResponse.hour)
-                calendar.set(Calendar.MINUTE, timeResponse.minute)
-                calendar.set(Calendar.SECOND, timeResponse.seconds)
-                calendar.set(Calendar.MILLISECOND, timeResponse.milliSeconds)
+                // Synchronize calendar access to prevent race conditions
+                synchronized(calendarLock) {
+                    calendar.set(Calendar.YEAR, timeResponse.year)
+                    calendar.set(Calendar.MONTH, timeResponse.month - 1)
+                    calendar.set(Calendar.DAY_OF_MONTH, timeResponse.day)
+                    calendar.set(Calendar.HOUR_OF_DAY, timeResponse.hour)
+                    calendar.set(Calendar.MINUTE, timeResponse.minute)
+                    calendar.set(Calendar.SECOND, timeResponse.seconds)
+                    calendar.set(Calendar.MILLISECOND, timeResponse.milliSeconds)
+                    // Immediately update cached date to reflect new API time
+                    val year = calendar.get(Calendar.YEAR)
+                    val month = calendar.get(Calendar.MONTH) + 1
+                    val day = calendar.get(Calendar.DAY_OF_MONTH)
+                    cachedTodayDate = String.format(Locale.US, "%04d-%02d-%02d", year, month, day)
+                }
                 Log.d(TAG, "Synced time from API: ${timeResponse.dateTime}")
             } else {
                 Log.w(TAG, "API time null, using local tick")
@@ -128,38 +141,40 @@ class ApiClock @Inject constructor(
     }
 
     private fun updateDisplay() {
-        val day = calendar.get(Calendar.DAY_OF_MONTH)
-        val month = calendar.get(Calendar.MONTH) + 1
-        val year = calendar.get(Calendar.YEAR)
-        val hour = calendar.get(Calendar.HOUR_OF_DAY)
-        val minute = calendar.get(Calendar.MINUTE)
-        val second = calendar.get(Calendar.SECOND)
+        synchronized(calendarLock) {
+            val day = calendar.get(Calendar.DAY_OF_MONTH)
+            val month = calendar.get(Calendar.MONTH) + 1
+            val year = calendar.get(Calendar.YEAR)
+            val hour = calendar.get(Calendar.HOUR_OF_DAY)
+            val minute = calendar.get(Calendar.MINUTE)
+            val second = calendar.get(Calendar.SECOND)
 
-        val dayOfWeekIndex = calendar.get(Calendar.DAY_OF_WEEK)
-        val dayOfWeekEn = when (dayOfWeekIndex) {
-            Calendar.MONDAY -> "Monday"
-            Calendar.TUESDAY -> "Tuesday"
-            Calendar.WEDNESDAY -> "Wednesday"
-            Calendar.THURSDAY -> "Thursday"
-            Calendar.FRIDAY -> "Friday"
-            Calendar.SATURDAY -> "Saturday"
-            Calendar.SUNDAY -> "Sunday"
-            else -> ""
+            val dayOfWeekIndex = calendar.get(Calendar.DAY_OF_WEEK)
+            val dayOfWeekEn = when (dayOfWeekIndex) {
+                Calendar.MONDAY -> "Monday"
+                Calendar.TUESDAY -> "Tuesday"
+                Calendar.WEDNESDAY -> "Wednesday"
+                Calendar.THURSDAY -> "Thursday"
+                Calendar.FRIDAY -> "Friday"
+                Calendar.SATURDAY -> "Saturday"
+                Calendar.SUNDAY -> "Sunday"
+                else -> ""
+            }
+            val dayOfWeekId = dayNames[dayOfWeekEn] ?: dayOfWeekEn.uppercase()
+
+            val dateStr = String.format(
+                Locale.US,
+                "%s, %02d/%02d/%04d",
+                dayOfWeekId, day, month, year
+            )
+            val timeStr = String.format(Locale.US, "%02d:%02d:%02d", hour, minute, second)
+
+            _currentDate.postValue(dateStr)
+            _currentTime.postValue(timeStr)
+
+            // Cache today's date for thread-safe access from IO threads
+            cachedTodayDate = String.format(Locale.US, "%04d-%02d-%02d", year, month, day)
         }
-        val dayOfWeekId = dayNames[dayOfWeekEn] ?: dayOfWeekEn.uppercase()
-
-        val dateStr = String.format(
-            Locale.US,
-            "%s, %02d/%02d/%04d",
-            dayOfWeekId, day, month, year
-        )
-        val timeStr = String.format(Locale.US, "%02d:%02d:%02d", hour, minute, second)
-
-        _currentDate.postValue(dateStr)
-        _currentTime.postValue(timeStr)
-
-        // Cache today's date for thread-safe access from IO threads
-        cachedTodayDate = String.format(Locale.US, "%04d-%02d-%02d", year, month, day)
     }
 
     /**
@@ -172,12 +187,14 @@ class ApiClock @Inject constructor(
 
     /**
      * Returns the current API-synced time as "HH:mm" (e.g. "18:05").
-     * Thread-safe — reads from the volatile-backed calendar.
+     * Thread-safe — reads from the synchronized calendar.
      */
     fun getCurrentTimeFormatted(): String {
-        val hour = calendar.get(Calendar.HOUR_OF_DAY)
-        val minute = calendar.get(Calendar.MINUTE)
-        return String.format(Locale.US, "%02d:%02d", hour, minute)
+        synchronized(calendarLock) {
+            val hour = calendar.get(Calendar.HOUR_OF_DAY)
+            val minute = calendar.get(Calendar.MINUTE)
+            return String.format(Locale.US, "%02d:%02d", hour, minute)
+        }
     }
 
     /**
