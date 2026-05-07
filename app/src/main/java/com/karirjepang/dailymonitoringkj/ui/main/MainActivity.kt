@@ -180,8 +180,10 @@ class MainActivity : FragmentActivity() {
 //                }
 
                 val fragment: Fragment = when (currentSlideIndex) {
-                    0 -> SlideDua()
-                    1 -> SlideEnam()
+                    0 -> SlideSatu()
+                    1 -> SlideDua()
+                    2 -> SlideLima()
+                    3 -> SlideEnam()
                     else -> SlideEnam()
                 }
 
@@ -206,7 +208,7 @@ class MainActivity : FragmentActivity() {
                     }
                 }
 
-                val nextSlideIndex = (currentSlideIndex + 1) % 2
+                val nextSlideIndex = (currentSlideIndex + 1) % 4
 
                 val startTime = System.currentTimeMillis()
                 val minDisplayMs = 10_000L
